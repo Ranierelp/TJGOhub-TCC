@@ -2,7 +2,7 @@ classDiagram
     %% ============================================
     %% CORE MODELS (Base do Sistema)
     %% ============================================
-    
+
     class Project {
         +UUID id
         +String name
@@ -201,7 +201,7 @@ classDiagram
         --
         +get_full_name()
         +has_permission(perm)
-        +get_accessible_projects()
+        +get_short_name()
     }
 
     class Group {
@@ -284,13 +284,13 @@ classDiagram
     %% ============================================
 
     note for Project "Projeto é a entidade raiz.\nAgrupa ambientes, casos e execuções."
-    
+
     note for TestCase "Caso de teste documenta o teste\ne faz ponte entre negócio e código."
-    
+
     note for TestRun "Execução agrupa resultados\nde uma rodada de testes."
-    
+
     note for TestResult "Resultado individual de cada teste.\nPreserva histórico mesmo se caso deletado."
-    
+
     note for FlakinessMetric "Métricas calculadas automaticamente.\nIdentifica testes instáveis."
-    
+
     note for Artifact "Artefatos anexados aos resultados:\nscreenshots, vídeos, traces, logs."

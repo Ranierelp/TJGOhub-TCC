@@ -27,7 +27,7 @@ markuppy==1.14
 mysql-connector-python==9.2.0
 odfpy==1.4.1
 openpyxl==3.1.2
-pandas==2.2.2
+pandas==3.0.0
 psutil==7.0.0
 pymongo==4.11.1
 psycopg2==2.9.3
