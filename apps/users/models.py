@@ -6,11 +6,8 @@ from django.db import models
 from django.db.models import Q
 from django.utils import timezone
 from django.utils.translation import gettext_lazy as _
-from tools.fields import CellphoneField, CPFCNPJField, PhoneField, RGField
-from tools.utils import path_and_rename
 
 from apps.commons.models import BaseModel
-from apps.users.constants import UserConstants
 
 
 class UserManager(BaseUserManager):
@@ -73,26 +70,24 @@ class User(AbstractBaseUser, BaseModel, PermissionsMixin):
         verbose_name = _("Usuário")
         verbose_name_plural = _("Usuários")
         ordering = ["-created_at"]
+        indexes = [
+            models.Index(fields=["email"]),
+            models.Index(fields=["is_active", "is_staff"]),
+        ]
 
     # Credentials
     email = models.EmailField(_("Email"), max_length=255, unique=True)
-    username = models.CharField(_("Username"), max_length=255, unique=True, blank=True, null=True)
-    cpf_cnpj = CPFCNPJField(_("CPF/CNPJ"), max_length=14, unique=True, null=True, blank=True)
-    rg = RGField(_(u"RG"), blank=True, null=True)
+    first_name = models.CharField(_("Nome"), max_length=30, null=True, blank=True, help_text=_("Nome do usuário"))
+    last_name = models.CharField(_("Sobrenome"), max_length=150, null=True, blank=True, help_text=_("Sobrenome do usuário"))
 
     # Access informations and dates
-    status = models.CharField(_("Status"), max_length=20, choices=UserConstants.USER_STATUSES, default=UserConstants.USER_STATUS_REGISTER_UNCOMPLETED)
     is_staff = models.BooleanField(_("Colaborador"), default=False)
     is_active = models.BooleanField(_("Ativo"), default=True)
     date_joined = models.DateTimeField(_("Data de entrada"), default=timezone.now)
-    first_login_accomplished = models.BooleanField(_("Já entrou na plataforma pela primeira vez?"), default=False)
 
     # Consensus
     terms = models.BooleanField(_("Aceitou os termos e condições da plataforma?"), default=False)
     receive_emails = models.BooleanField(_("Aceitou receber comunicações via e-mail?"), default=False)
-
-    # Others
-    other_emails = models.TextField(_("Outros e-mails"), null=True, blank=True)
 
     objects = UserManager()
 
@@ -100,12 +95,22 @@ class User(AbstractBaseUser, BaseModel, PermissionsMixin):
     USERNAME_FIELD = "email"
     REQUIRED_FIELDS = []
 
-    def clean(self):
-        if self.rg and User.objects.filter(Q(rg=self.rg) & Q(is_active=True) & ~Q(id=self.id)).exists():
-            raise ValidationError(_(u"RG já cadastrado."))
+    def get_full_name(self):
+        """
+        Retorna o nome completo do usuário ou o email se os nomes não estiverem disponíveis.
+        """
+        if self.first_name or self.last_name:
+            full_name = f"{self.first_name} {self.last_name}".strip()
+            return full_name if full_name else self.email
+        return self.email
 
-    def get_profile(self):
-        return Profile.objects.get(user=self) if Profile.objects.filter(user=self).exists() else None
+    def get_short_name(self):
+        """
+        Retorna o primeiro nome ou a parte local do email.
+
+        Usado em saudações e notificações.
+        """
+        return self.first_name or self.email.split('@')[0]
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -117,22 +122,4 @@ class User(AbstractBaseUser, BaseModel, PermissionsMixin):
         return {key: value for key, value in self.__dict__.items() if key not in self._excluded_fields}
 
     def __str__(self):
-        return self.get_profile().name if self.get_profile() else self.email
-
-
-class Profile(BaseModel):
-    class Meta:
-        verbose_name = _(u"Perfil")
-        verbose_name_plural = _(u"Perfis")
-        ordering = ["-created_at"]
-
-    user = models.OneToOneField("User", on_delete=models.DO_NOTHING, related_name="user")
-    name = models.CharField(_(u"Nome"), max_length=255)
-    phone = PhoneField(_(u"Telefone fixo"), blank=True, null=True, max_length=20)
-    cellphone = CellphoneField(_(u"Telefone celular"), blank=True, null=True, max_length=20)
-    born = models.DateField(_(u"Data de nascimento"), blank=True, null=True)
-    avatar = models.FileField(_(u"Avatar"), null=True, blank=True, upload_to=path_and_rename)
-    address = models.OneToOneField("commons.Address", on_delete=models.SET_NULL, blank=True, null=True, verbose_name=_(u"Endereço"))
-
-    def __str__(self):
-        return f"{self._meta.verbose_name} #{self.name}"
+        return f"{self.first_name} {self.last_name}" if self.first_name or self.last_name else self.email
