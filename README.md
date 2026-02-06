@@ -24,6 +24,7 @@ Este projeto foi desenvolvido como Trabalho de Conclusão de Curso (TCC), com es
 
 ### MVP (Escopo Inicial)
 
+- [x] CRUD dos casos de teste
 - [ ] Upload manual de relatórios JUnit XML
 - [ ] Armazenamento de evidências (screenshots, vídeos, traces do Playwright)
 - [ ] Dashboard de visualização de resultados
@@ -428,6 +429,7 @@ docker-compose -f docker-compose.prod.yml up -d
 - [x] Estrutura base do projeto Django
 - [x] Autenticação JWT
 - [x] Models base com soft delete
+- [x] CRUD dos casos de teste
 - [ ] Parser de relatórios JUnit XML
 - [ ] Upload e armazenamento de evidências
 - [ ] Dashboard básico de resultados
@@ -441,17 +443,6 @@ docker-compose -f docker-compose.prod.yml up -d
 - [ ] API para GitLab CI
 - [ ] Webhooks de notificação
 - [ ] Integração com sistemas TJGO
-
----
-
-## Contribuindo
-
-1. Faça um Fork do projeto
-2. Crie uma branch para sua feature (`git checkout -b feature/nova-feature`)
-3. Commit suas mudanças (`git commit -m 'Adiciona nova feature'`)
-4. Push para a branch (`git push origin feature/nova-feature`)
-5. Abra um Pull Request
-
 ---
 
 ## Licença
