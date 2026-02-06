@@ -1,0 +1,9 @@
+# Production PostgreSQL Environment Variables
+# Copy this file to .postgres and fill in your production values
+
+POSTGRES_HOST=your-postgres-host
+POSTGRES_PORT=5432
+POSTGRES_DB=tjgohub_prod
+POSTGRES_USER=your-db-user
+POSTGRES_PASSWORD=your-strong-password
+POSTGRES_SERVER=your-postgres-host

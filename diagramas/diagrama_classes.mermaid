@@ -1,0 +1,296 @@
+classDiagram
+    %% ============================================
+    %% CORE MODELS (Base do Sistema)
+    %% ============================================
+    
+    class Project {
+        +UUID id
+        +String name
+        +String slug
+        +Text description
+        +Boolean is_active
+        +DateTime created_at
+        +DateTime updated_at
+        +User created_by
+        --
+        +archive()
+        +activate()
+        +get_active_environments()
+        +get_test_cases_count()
+    }
+
+    class Environment {
+        +UUID id
+        +String name
+        +String slug
+        +String base_url
+        +String env_type
+        +Boolean is_active
+        +JSON config
+        +DateTime created_at
+        +DateTime updated_at
+        +Project project
+        --
+        +validate_url()
+        +test_connection()
+    }
+
+    class Tag {
+        +UUID id
+        +String name
+        +String slug
+        +String color
+        +Text description
+        +DateTime created_at
+        --
+        +get_test_cases()
+        +get_usage_count()
+    }
+
+    %% ============================================
+    %% TEST CASES (Catálogo de Testes)
+    %% ============================================
+
+    class TestCase {
+        +UUID id
+        +String case_id
+        +String title
+        +String status
+        +String module
+        +Text objective
+        +Text preconditions
+        +Text postconditions
+        +Text expected_result
+        +Text observations
+        +String spec_path
+        +String test_title
+        +String playwright_id
+        +DateTime created_at
+        +DateTime updated_at
+        +Project project
+        +User created_by
+        +User last_modified_by
+        +ManyToMany tags
+        --
+        +change_status(new_status)
+        +archive()
+        +get_last_results(n)
+        +calculate_flakiness()
+        +get_success_rate()
+    }
+
+    %% ============================================
+    %% TEST RUNS (Execuções)
+    %% ============================================
+
+    class TestRun {
+        +UUID id
+        +String run_id
+        +String status
+        +String trigger_type
+        +String branch
+        +String commit_sha
+        +String commit_message
+        +Integer total_tests
+        +Integer passed_tests
+        +Integer failed_tests
+        +Integer skipped_tests
+        +Integer flaky_tests
+        +Float duration_seconds
+        +DateTime started_at
+        +DateTime completed_at
+        +DateTime created_at
+        +Project project
+        +Environment environment
+        +User triggered_by
+        +ManyToMany tags
+        --
+        +start()
+        +complete()
+        +fail()
+        +cancel()
+        +calculate_metrics()
+        +get_success_rate()
+        +get_results()
+    }
+
+    class TestResult {
+        +UUID id
+        +String result_id
+        +String status
+        +Float duration_seconds
+        +Text error_message
+        +Text stack_trace
+        +String retry_number
+        +JSON metadata
+        +DateTime executed_at
+        +DateTime created_at
+        +TestRun test_run
+        +TestCase test_case
+        --
+        +mark_as_flaky()
+        +has_artifacts()
+        +get_error_summary()
+    }
+
+    %% ============================================
+    %% ARTIFACTS (Artefatos de Teste)
+    %% ============================================
+
+    class Artifact {
+        +UUID id
+        +String artifact_type
+        +String file_path
+        +String file_name
+        +Integer file_size
+        +String mime_type
+        +String title
+        +Text description
+        +String thumbnail_path
+        +DateTime created_at
+        +TestResult test_result
+        +User uploaded_by
+        --
+        +generate_thumbnail()
+        +get_download_url()
+        +delete_file()
+        +validate_size()
+    }
+
+    %% ============================================
+    %% METRICS (Análise de Flakiness)
+    %% ============================================
+
+    class FlakinessMetric {
+        +UUID id
+        +Float flakiness_rate
+        +Integer total_runs
+        +Integer failed_runs
+        +Integer passed_runs
+        +Integer flaky_occurrences
+        +String stability_classification
+        +DateTime first_detected_at
+        +DateTime last_calculated_at
+        +DateTime created_at
+        +DateTime updated_at
+        +TestCase test_case
+        --
+        +calculate()
+        +update_metrics()
+        +is_flaky()
+        +get_trend()
+        +get_recommendations()
+    }
+
+    %% ============================================
+    %% USERS & PERMISSIONS
+    %% ============================================
+
+    class User {
+        +UUID id
+        +String email
+        +String first_name
+        +String last_name
+        +String password
+        +Boolean is_active
+        +Boolean is_staff
+        +DateTime last_login
+        +DateTime created_at
+        +ManyToMany groups
+        +ManyToMany permissions
+        --
+        +get_full_name()
+        +has_permission(perm)
+        +get_accessible_projects()
+    }
+
+    class Group {
+        +UUID id
+        +String name
+        +Text description
+        +ManyToMany permissions
+        --
+        +add_permission(perm)
+        +remove_permission(perm)
+    }
+
+    class Permission {
+        +UUID id
+        +String codename
+        +String name
+        +String content_type
+        --
+        +check_user_has(user)
+    }
+
+    %% ============================================
+    %% AUDIT (Auditoria)
+    %% ============================================
+
+    class AuditLog {
+        +UUID id
+        +String action
+        +String model_name
+        +UUID object_id
+        +JSON before_data
+        +JSON after_data
+        +String ip_address
+        +String user_agent
+        +DateTime created_at
+        +User user
+        --
+        +get_changes()
+        +get_summary()
+    }
+
+    %% ============================================
+    %% RELACIONAMENTOS
+    %% ============================================
+
+    %% Project relacionamentos
+    Project "1" --> "0..*" Environment : has
+    Project "1" --> "0..*" TestCase : contains
+    Project "1" --> "0..*" TestRun : executes
+
+    %% TestCase relacionamentos
+    TestCase "1" --> "0..*" TestResult : generates
+    TestCase "0..*" --> "0..*" Tag : categorized_by
+    TestCase "1" --> "0..1" FlakinessMetric : has
+    TestCase "0..*" --> "1" User : created_by
+    TestCase "0..*" --> "1" User : modified_by
+
+    %% TestRun relacionamentos
+    TestRun "1" --> "1" Environment : runs_on
+    TestRun "1" --> "0..*" TestResult : produces
+    TestRun "0..*" --> "1" User : triggered_by
+    TestRun "0..*" --> "0..*" Tag : filtered_by
+
+    %% TestResult relacionamentos
+    TestResult "1" --> "0..*" Artifact : has
+    TestResult "0..*" --> "0..1" TestCase : references
+
+    %% Artifact relacionamentos
+    Artifact "0..*" --> "1" User : uploaded_by
+
+    %% User relacionamentos
+    User "0..*" --> "0..*" Group : belongs_to
+    Group "0..*" --> "0..*" Permission : has
+
+    %% Audit relacionamentos
+    AuditLog "0..*" --> "1" User : performed_by
+
+    %% ============================================
+    %% NOTAS
+    %% ============================================
+
+    note for Project "Projeto é a entidade raiz.\nAgrupa ambientes, casos e execuções."
+    
+    note for TestCase "Caso de teste documenta o teste\ne faz ponte entre negócio e código."
+    
+    note for TestRun "Execução agrupa resultados\nde uma rodada de testes."
+    
+    note for TestResult "Resultado individual de cada teste.\nPreserva histórico mesmo se caso deletado."
+    
+    note for FlakinessMetric "Métricas calculadas automaticamente.\nIdentifica testes instáveis."
+    
+    note for Artifact "Artefatos anexados aos resultados:\nscreenshots, vídeos, traces, logs."

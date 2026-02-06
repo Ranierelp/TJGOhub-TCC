@@ -1,0 +1,1 @@
+web: gunicorn tjgohub.wsgi:application

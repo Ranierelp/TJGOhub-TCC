@@ -1,0 +1,161 @@
+# DIAGRAMA DE CASOS DE USO - TJGOHUB
+## Sistema de Gerenciamento de Testes Automatizados
+
+```
+                                    SISTEMA TJGOHUB
+┌─────────────────────────────────────────────────────────────────────────────────┐
+│                                                                                 │
+│  ┌──────────────────────────────────────────────────────────────────────────┐  │
+│  │                      GERENCIAMENTO DE PROJETOS                           │  │
+│  │  • UC01: Criar Projeto                                                   │  │
+│  │  • UC02: Editar Projeto                                                  │  │
+│  │  • UC03: Arquivar Projeto                                                │  │
+│  │  • UC04: Listar Projetos                                                 │  │
+│  └──────────────────────────────────────────────────────────────────────────┘  │
+│                                                                                 │
+│  ┌──────────────────────────────────────────────────────────────────────────┐  │
+│  │                     GERENCIAMENTO DE AMBIENTES                           │  │
+│  │  • UC05: Criar Ambiente                                                  │  │
+│  │  • UC06: Editar Ambiente                                                 │  │
+│  │  • UC07: Listar Ambientes                                                │  │
+│  └──────────────────────────────────────────────────────────────────────────┘  │
+│                                                                                 │
+│  ┌──────────────────────────────────────────────────────────────────────────┐  │
+│  │                    CATÁLOGO DE CASOS DE TESTE                            │  │
+│  │  • UC08: Criar Caso de Teste                                             │  │
+│  │  • UC09: Editar Caso de Teste                                            │  │
+│  │  • UC10: Revisar Caso de Teste                                           │  │
+│  │  • UC11: Arquivar Caso de Teste                                          │  │
+│  │  • UC12: Buscar Casos de Teste                                           │  │
+│  │  • UC13: Vincular com Playwright                                         │  │
+│  └──────────────────────────────────────────────────────────────────────────┘  │
+│                                                                                 │
+│  ┌──────────────────────────────────────────────────────────────────────────┐  │
+│  │                         SISTEMA DE TAGS                                  │  │
+│  │  • UC14: Criar Tag                                                       │  │
+│  │  • UC15: Atribuir Tags                                                   │  │
+│  │  • UC16: Filtrar por Tags                                                │  │
+│  └──────────────────────────────────────────────────────────────────────────┘  │
+│                                                                                 │
+│  ┌──────────────────────────────────────────────────────────────────────────┐  │
+│  │                       EXECUÇÕES DE TESTE                                 │  │
+│  │  • UC17: Iniciar Execução Manual                                         │  │
+│  │  • UC18: Iniciar Execução via API (CI/CD)                                │  │
+│  │  • UC19: Visualizar Execução                                             │  │
+│  │  • UC20: Cancelar Execução                                               │  │
+│  │  • UC21: Listar Execuções                                                │  │
+│  └──────────────────────────────────────────────────────────────────────────┘  │
+│                                                                                 │
+│  ┌──────────────────────────────────────────────────────────────────────────┐  │
+│  │                       RESULTADOS DE TESTE                                │  │
+│  │  • UC22: Registrar Resultado via API                                     │  │
+│  │  • UC23: Visualizar Resultado                                            │  │
+│  │  • UC24: Comparar Resultados                                             │  │
+│  │  • UC25: Exportar Resultados                                             │  │
+│  └──────────────────────────────────────────────────────────────────────────┘  │
+│                                                                                 │
+│  ┌──────────────────────────────────────────────────────────────────────────┐  │
+│  │                            ARTEFATOS                                     │  │
+│  │  • UC26: Upload de Screenshot                                            │  │
+│  │  • UC27: Upload de Vídeo                                                 │  │
+│  │  • UC28: Upload de Trace                                                 │  │
+│  │  • UC29: Visualizar Artefato                                             │  │
+│  │  • UC30: Download Artefato                                               │  │
+│  └──────────────────────────────────────────────────────────────────────────┘  │
+│                                                                                 │
+│  ┌──────────────────────────────────────────────────────────────────────────┐  │
+│  │                       ANÁLISE E MÉTRICAS                                 │  │
+│  │  • UC31: Visualizar Dashboard                                            │  │
+│  │  • UC32: Gerar Relatório                                                 │  │
+│  │  • UC33: Analisar Flakiness                                              │  │
+│  │  • UC34: Ver Histórico                                                   │  │
+│  │  • UC35: Comparar Períodos                                               │  │
+│  └──────────────────────────────────────────────────────────────────────────┘  │
+│                                                                                 │
+│  ┌──────────────────────────────────────────────────────────────────────────┐  │
+│  │                      CONTROLE DE ACESSO                                  │  │
+│  │  • UC36: Gerenciar Usuários                                              │  │
+│  │  • UC37: Atribuir Permissões                                             │  │
+│  │  • UC38: Autenticar Usuário                                              │  │
+│  │  • UC39: Logout                                                          │  │
+│  └──────────────────────────────────────────────────────────────────────────┘  │
+│                                                                                 │
+│  ┌──────────────────────────────────────────────────────────────────────────┐  │
+│  │                           AUDITORIA                                      │  │
+│  │  • UC40: Visualizar Logs                                                 │  │
+│  │  • UC41: Rastrear Alterações                                             │  │
+│  └──────────────────────────────────────────────────────────────────────────┘  │
+│                                                                                 │
+└─────────────────────────────────────────────────────────────────────────────────┘
+
+                                    ATORES
+┌─────────────────────────────────────────────────────────────────────────────────┐
+│                                                                                 │
+│  👤 ADMINISTRADOR                                                               │
+│     ├─ Gerencia projetos e ambientes                                           │
+│     ├─ Gerencia usuários e permissões                                          │
+│     └─ Acessa logs de auditoria                                                │
+│                                                                                 │
+│  👔 QA LEAD                                                                     │
+│     ├─ Cria e gerencia projetos                                                │
+│     ├─ Revisa casos de teste                                                   │
+│     ├─ Analisa métricas e flakiness                                            │
+│     └─ Gera relatórios                                                         │
+│                                                                                 │
+│  📋 QA ANALYST                                                                  │
+│     ├─ Cria e edita casos de teste                                             │
+│     ├─ Vincula testes com Playwright                                           │
+│     ├─ Inicia execuções manuais                                                │
+│     └─ Faz upload de artefatos                                                 │
+│                                                                                 │
+│  💻 DESENVOLVEDOR                                                               │
+│     ├─ Visualiza projetos e casos                                              │
+│     ├─ Consulta resultados de execuções                                        │
+│     └─ Acessa dashboard e métricas                                             │
+│                                                                                 │
+│  👁️ VISUALIZADOR                                                                │
+│     ├─ Acesso somente leitura                                                  │
+│     ├─ Visualiza dashboard                                                     │
+│     └─ Consulta execuções e resultados                                         │
+│                                                                                 │
+│  🤖 SISTEMA CI/CD                                                               │
+│     ├─ Inicia execuções via API                                                │
+│     ├─ Registra resultados automaticamente                                     │
+│     └─ Faz upload de artefatos (screenshots, vídeos, traces)                   │
+│                                                                                 │
+└─────────────────────────────────────────────────────────────────────────────────┘
+
+
+                            MATRIZ DE PERMISSÕES
+┌──────────────┬──────┬─────────┬────────────┬──────┬─────────┬────────┐
+│ Caso de Uso  │ Admin│ QA Lead │ QA Analyst │ Dev  │ Viewer  │ CI/CD  │
+├──────────────┼──────┼─────────┼────────────┼──────┼─────────┼────────┤
+│ UC01-UC03    │  ✓   │    ✓    │            │      │         │        │
+│ UC04         │  ✓   │    ✓    │     ✓      │  ✓   │    ✓    │        │
+│ UC05-UC06    │  ✓   │    ✓    │            │      │         │        │
+│ UC07         │  ✓   │    ✓    │     ✓      │  ✓   │    ✓    │        │
+│ UC08-UC09    │      │    ✓    │     ✓      │      │         │        │
+│ UC10-UC11    │      │    ✓    │            │      │         │        │
+│ UC12         │  ✓   │    ✓    │     ✓      │  ✓   │    ✓    │        │
+│ UC13         │      │         │     ✓      │      │         │        │
+│ UC14         │      │    ✓    │            │      │         │        │
+│ UC15-UC16    │      │    ✓    │     ✓      │      │         │        │
+│ UC17         │      │    ✓    │     ✓      │      │         │        │
+│ UC18         │      │         │            │      │         │   ✓    │
+│ UC19         │  ✓   │    ✓    │     ✓      │  ✓   │    ✓    │        │
+│ UC20         │      │    ✓    │            │      │         │        │
+│ UC21         │  ✓   │    ✓    │     ✓      │  ✓   │    ✓    │        │
+│ UC22         │      │         │            │      │         │   ✓    │
+│ UC23         │  ✓   │    ✓    │     ✓      │  ✓   │    ✓    │        │
+│ UC24-UC25    │      │    ✓    │     ✓      │      │         │        │
+│ UC26-UC28    │      │         │     ✓      │      │         │   ✓    │
+│ UC29-UC30    │  ✓   │    ✓    │     ✓      │  ✓   │    ✓    │        │
+│ UC31         │  ✓   │    ✓    │     ✓      │  ✓   │    ✓    │        │
+│ UC32-UC35    │      │    ✓    │            │      │         │        │
+│ UC36-UC37    │  ✓   │         │            │      │         │        │
+│ UC38-UC39    │  ✓   │    ✓    │     ✓      │  ✓   │    ✓    │        │
+│ UC40-UC41    │  ✓   │         │            │      │         │        │
+└──────────────┴──────┴─────────┴────────────┴──────┴─────────┴────────┘
+
+Legenda: ✓ = Possui acesso ao caso de uso
+```

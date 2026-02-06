@@ -1,0 +1,269 @@
+erDiagram
+    %% ============================================
+    %% CORE MODELS
+    %% ============================================
+    
+    PROJECT {
+        uuid id PK
+        varchar name UK
+        varchar slug UK
+        text description
+        boolean is_active
+        timestamp created_at
+        timestamp updated_at
+        uuid created_by_id FK
+    }
+
+    ENVIRONMENT {
+        uuid id PK
+        varchar name
+        varchar slug
+        varchar base_url
+        varchar env_type
+        boolean is_active
+        json config
+        timestamp created_at
+        timestamp updated_at
+        uuid project_id FK
+    }
+
+    TAG {
+        uuid id PK
+        varchar name UK
+        varchar slug UK
+        varchar color
+        text description
+        timestamp created_at
+    }
+
+    %% ============================================
+    %% TEST CASES
+    %% ============================================
+
+    TEST_CASE {
+        uuid id PK
+        varchar case_id UK
+        varchar title
+        varchar status
+        varchar module
+        text objective
+        text preconditions
+        text postconditions
+        text expected_result
+        text observations
+        varchar spec_path
+        varchar test_title
+        varchar playwright_id UK
+        timestamp created_at
+        timestamp updated_at
+        uuid project_id FK
+        uuid created_by_id FK
+        uuid last_modified_by_id FK
+    }
+
+    TEST_CASE_TAGS {
+        uuid id PK
+        uuid test_case_id FK
+        uuid tag_id FK
+    }
+
+    %% ============================================
+    %% TEST RUNS
+    %% ============================================
+
+    TEST_RUN {
+        uuid id PK
+        varchar run_id UK
+        varchar status
+        varchar trigger_type
+        varchar branch
+        varchar commit_sha
+        text commit_message
+        integer total_tests
+        integer passed_tests
+        integer failed_tests
+        integer skipped_tests
+        integer flaky_tests
+        float duration_seconds
+        timestamp started_at
+        timestamp completed_at
+        timestamp created_at
+        uuid project_id FK
+        uuid environment_id FK
+        uuid triggered_by_id FK
+    }
+
+    TEST_RUN_TAGS {
+        uuid id PK
+        uuid test_run_id FK
+        uuid tag_id FK
+    }
+
+    TEST_RESULT {
+        uuid id PK
+        varchar result_id UK
+        varchar status
+        float duration_seconds
+        text error_message
+        text stack_trace
+        integer retry_number
+        json metadata
+        timestamp executed_at
+        timestamp created_at
+        uuid test_run_id FK
+        uuid test_case_id FK
+    }
+
+    %% ============================================
+    %% ARTIFACTS
+    %% ============================================
+
+    ARTIFACT {
+        uuid id PK
+        varchar artifact_type
+        varchar file_path
+        varchar file_name
+        bigint file_size
+        varchar mime_type
+        varchar title
+        text description
+        varchar thumbnail_path
+        timestamp created_at
+        uuid test_result_id FK
+        uuid uploaded_by_id FK
+    }
+
+    %% ============================================
+    %% METRICS
+    %% ============================================
+
+    FLAKINESS_METRIC {
+        uuid id PK
+        float flakiness_rate
+        integer total_runs
+        integer failed_runs
+        integer passed_runs
+        integer flaky_occurrences
+        varchar stability_classification
+        timestamp first_detected_at
+        timestamp last_calculated_at
+        timestamp created_at
+        timestamp updated_at
+        uuid test_case_id FK
+    }
+
+    %% ============================================
+    %% USERS & AUTH
+    %% ============================================
+
+    USER {
+        uuid id PK
+        varchar email UK
+        varchar first_name
+        varchar last_name
+        varchar password
+        boolean is_active
+        boolean is_staff
+        boolean is_superuser
+        timestamp last_login
+        timestamp created_at
+        timestamp updated_at
+    }
+
+    GROUP {
+        uuid id PK
+        varchar name UK
+        text description
+        timestamp created_at
+    }
+
+    PERMISSION {
+        uuid id PK
+        varchar codename UK
+        varchar name
+        varchar content_type
+        timestamp created_at
+    }
+
+    USER_GROUPS {
+        uuid id PK
+        uuid user_id FK
+        uuid group_id FK
+    }
+
+    USER_PERMISSIONS {
+        uuid id PK
+        uuid user_id FK
+        uuid permission_id FK
+    }
+
+    GROUP_PERMISSIONS {
+        uuid id PK
+        uuid group_id FK
+        uuid permission_id FK
+    }
+
+    %% ============================================
+    %% AUDIT
+    %% ============================================
+
+    AUDIT_LOG {
+        uuid id PK
+        varchar action
+        varchar model_name
+        uuid object_id
+        json before_data
+        json after_data
+        varchar ip_address
+        varchar user_agent
+        timestamp created_at
+        uuid user_id FK
+    }
+
+    %% ============================================
+    %% RELACIONAMENTOS
+    %% ============================================
+
+    %% Project relacionamentos
+    PROJECT ||--o{ ENVIRONMENT : "has"
+    PROJECT ||--o{ TEST_CASE : "contains"
+    PROJECT ||--o{ TEST_RUN : "executes"
+    USER ||--o{ PROJECT : "creates"
+
+    %% Environment relacionamentos
+    TEST_RUN }o--|| ENVIRONMENT : "runs_on"
+
+    %% TestCase relacionamentos
+    TEST_CASE ||--o{ TEST_RESULT : "generates"
+    TEST_CASE ||--o{ TEST_CASE_TAGS : "has"
+    TEST_CASE ||--o| FLAKINESS_METRIC : "has"
+    USER ||--o{ TEST_CASE : "creates"
+    USER ||--o{ TEST_CASE : "modifies"
+
+    %% Tag relacionamentos
+    TAG ||--o{ TEST_CASE_TAGS : "categorizes"
+    TAG ||--o{ TEST_RUN_TAGS : "filters"
+
+    %% TestRun relacionamentos
+    TEST_RUN ||--o{ TEST_RESULT : "produces"
+    TEST_RUN ||--o{ TEST_RUN_TAGS : "has"
+    USER ||--o{ TEST_RUN : "triggers"
+
+    %% TestResult relacionamentos
+    TEST_RESULT ||--o{ ARTIFACT : "has"
+    TEST_RUN ||--o{ TEST_RESULT : "contains"
+    TEST_CASE ||--o{ TEST_RESULT : "references"
+
+    %% Artifact relacionamentos
+    USER ||--o{ ARTIFACT : "uploads"
+
+    %% User relacionamentos
+    USER ||--o{ USER_GROUPS : "belongs_to"
+    USER ||--o{ USER_PERMISSIONS : "has"
+    GROUP ||--o{ USER_GROUPS : "contains"
+    GROUP ||--o{ GROUP_PERMISSIONS : "has"
+    PERMISSION ||--o{ USER_PERMISSIONS : "granted_to"
+    PERMISSION ||--o{ GROUP_PERMISSIONS : "granted_to"
+
+    %% Audit relacionamentos
+    USER ||--o{ AUDIT_LOG : "performs"

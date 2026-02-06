@@ -1,0 +1,162 @@
+graph LR
+    %% Atores
+    Admin((Administrador))
+    QALead((QA Lead))
+    QAAnalyst((QA Analyst))
+    Dev((Desenvolvedor))
+    Viewer((Visualizador))
+    CICD((Sistema CI/CD))
+
+    %% Gerenciamento de Projetos
+    UC01[Criar Projeto]
+    UC02[Editar Projeto]
+    UC03[Arquivar Projeto]
+    UC04[Listar Projetos]
+
+    %% Gerenciamento de Ambientes
+    UC05[Criar Ambiente]
+    UC06[Editar Ambiente]
+    UC07[Listar Ambientes]
+
+    %% Casos de Teste
+    UC08[Criar Caso de Teste]
+    UC09[Editar Caso de Teste]
+    UC10[Revisar Caso de Teste]
+    UC11[Arquivar Caso de Teste]
+    UC12[Buscar Casos de Teste]
+    UC13[Vincular com Playwright]
+
+    %% Tags
+    UC14[Criar Tag]
+    UC15[Atribuir Tags]
+    UC16[Filtrar por Tags]
+
+    %% Execuções
+    UC17[Iniciar Execução Manual]
+    UC18[Iniciar Execução via API]
+    UC19[Visualizar Execução]
+    UC20[Cancelar Execução]
+    UC21[Listar Execuções]
+
+    %% Resultados
+    UC22[Registrar Resultado via API]
+    UC23[Visualizar Resultado]
+    UC24[Comparar Resultados]
+    UC25[Exportar Resultados]
+
+    %% Artefatos
+    UC26[Upload Screenshot]
+    UC27[Upload Vídeo]
+    UC28[Upload Trace]
+    UC29[Visualizar Artefato]
+    UC30[Download Artefato]
+
+    %% Análise e Métricas
+    UC31[Visualizar Dashboard]
+    UC32[Gerar Relatório]
+    UC33[Analisar Flakiness]
+    UC34[Ver Histórico]
+    UC35[Comparar Períodos]
+
+    %% Controle de Acesso
+    UC36[Gerenciar Usuários]
+    UC37[Atribuir Permissões]
+    UC38[Autenticar]
+    UC39[Logout]
+
+    %% Auditoria
+    UC40[Visualizar Logs]
+    UC41[Rastrear Alterações]
+
+    %% Relacionamentos Admin
+    Admin --> UC01
+    Admin --> UC02
+    Admin --> UC03
+    Admin --> UC05
+    Admin --> UC06
+    Admin --> UC36
+    Admin --> UC37
+    Admin --> UC40
+    Admin --> UC41
+
+    %% Relacionamentos QA Lead
+    QALead --> UC01
+    QALead --> UC02
+    QALead --> UC04
+    QALead --> UC05
+    QALead --> UC06
+    QALead --> UC07
+    QALead --> UC08
+    QALead --> UC09
+    QALead --> UC10
+    QALead --> UC11
+    QALead --> UC12
+    QALead --> UC14
+    QALead --> UC15
+    QALead --> UC16
+    QALead --> UC17
+    QALead --> UC19
+    QALead --> UC20
+    QALead --> UC21
+    QALead --> UC23
+    QALead --> UC24
+    QALead --> UC25
+    QALead --> UC31
+    QALead --> UC32
+    QALead --> UC33
+    QALead --> UC34
+    QALead --> UC35
+
+    %% Relacionamentos QA Analyst
+    QAAnalyst --> UC04
+    QAAnalyst --> UC07
+    QAAnalyst --> UC08
+    QAAnalyst --> UC09
+    QAAnalyst --> UC12
+    QAAnalyst --> UC13
+    QAAnalyst --> UC15
+    QAAnalyst --> UC16
+    QAAnalyst --> UC17
+    QAAnalyst --> UC19
+    QAAnalyst --> UC21
+    QAAnalyst --> UC23
+    QAAnalyst --> UC24
+    QAAnalyst --> UC26
+    QAAnalyst --> UC27
+    QAAnalyst --> UC28
+    QAAnalyst --> UC29
+    QAAnalyst --> UC30
+    QAAnalyst --> UC31
+    QAAnalyst --> UC33
+    QAAnalyst --> UC34
+
+    %% Relacionamentos Desenvolvedor
+    Dev --> UC04
+    Dev --> UC12
+    Dev --> UC19
+    Dev --> UC21
+    Dev --> UC23
+    Dev --> UC29
+    Dev --> UC31
+    Dev --> UC34
+
+    %% Relacionamentos Viewer
+    Viewer --> UC04
+    Viewer --> UC12
+    Viewer --> UC19
+    Viewer --> UC21
+    Viewer --> UC31
+
+    %% Relacionamentos CI/CD
+    CICD --> UC18
+    CICD --> UC22
+    CICD --> UC26
+    CICD --> UC27
+    CICD --> UC28
+
+    %% Estilos
+    classDef actorStyle fill:#e3f2fd,stroke:#1976d2,stroke-width:3px
+    classDef ucStyle fill:#fff9c4,stroke:#f57f17,stroke-width:2px
+
+    class Admin,QALead,QAAnalyst,Dev,Viewer,CICD actorStyle
+    class UC01,UC02,UC03,UC04,UC05,UC06,UC07,UC08,UC09,UC10,UC11,UC12,UC13,UC14,UC15,UC16,UC17,UC18,UC19,UC20,UC21,UC22,UC23,UC24,UC25,UC26,UC27,UC28,UC29,UC30,UC31,UC32,UC33,UC34,UC35,UC36,UC37,UC38,UC39,UC40,UC41 ucStyle

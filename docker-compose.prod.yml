@@ -1,0 +1,55 @@
+services:
+  api:
+    build:
+      context: .
+      dockerfile: ./docker/production/django/Dockerfile
+    image: ${API_IMAGE_NAME?A variável API_IMAGE_NAME precisa ser definida}:${API_IMAGE_TAG?A variável API_IMAGE_TAG precisa ser definida}
+    command: /start
+    volumes:
+      - .:/app
+      - static_volume:/data/tjgohub/staticfiles
+      - media_volume:/data/tjgohub/mediafiles
+    expose:
+      - "8000"
+    ports:
+      - "8000:8000"
+    env_file:
+      - ./.envs/.production/.django
+    depends_on:
+      - redis
+    networks:
+      - tjgohub
+    deploy:
+      replicas: 2
+      resources:
+        limits:
+          memory: 1024M
+          cpus: "1"
+        reservations:
+          memory: 512M
+          cpus: "0.50"
+      update_config:
+        parallelism: 1
+        delay: 10s
+        order: start-first # Iniciar a nova instância antes de derrubar a antiga
+      restart_policy:
+        condition: on-failure
+        delay: 5s
+        max_attempts: 3
+        window: 120s
+
+  redis:
+    image: redis:6-alpine
+    container_name: redis
+    ports:
+      - "6379:6379"
+    networks:
+      - tjgohub
+
+networks:
+  tjgohub:
+    external: true  # Conecta aos serviços externos se disponível
+
+volumes:
+  static_volume:
+  media_volume:

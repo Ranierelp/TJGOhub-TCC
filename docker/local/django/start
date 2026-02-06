@@ -1,0 +1,14 @@
+#!/bin/bash
+
+set -o errexit
+set -o pipefail
+set -o nounset
+
+>&2 echo "Local..."
+python3 manage.py makemigrations --no-input
+python3 manage.py migrate --no-input
+# python3 manage.py collectstatic --no-input
+python3 manage.py loaddata initial.json
+# python3 manage.py loaddata theme.json
+# python3 manage.py crontab add
+python3 manage.py runserver 0.0.0.0:8000

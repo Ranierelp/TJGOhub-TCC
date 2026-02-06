@@ -1,0 +1,6 @@
+POSTGRES_HOST=postgres
+POSTGRES_PORT=5432
+POSTGRES_DB=tjgohub_db
+POSTGRES_USER=tjgohub_user
+POSTGRES_PASSWORD=tjgohub_pass
+POSTGRES_SERVER=postgres
