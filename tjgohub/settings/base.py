@@ -28,6 +28,14 @@ LOCAL_APPS = [
     "apps.commons",
     "apps.core",
     "apps.honeypot",
+    "apps.artifacts",
+    "apps.cases",
+    "apps.environments",
+    "apps.metrics",
+    "apps.projects",
+    "apps.results",
+    "apps.runs",
+    "apps.tags",
 ]
 
 THIRD_PARTY_APPS = [
