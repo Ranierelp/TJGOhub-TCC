@@ -310,5 +310,5 @@ class AddressViewSet(BaseModelApiViewSet):
         permission_classes=[IsAuthenticated],
     )
     def get_mine(self, request, *args, **kwargs):
-        instance = apps.get_model("users", "Profile").objects.filter(user=self.request.user).first()
-        return Response(self.get_serializer(instance.address, many=False).data, status=status.HTTP_200_OK)
+        instance = self.model.objects.filter(user=self.request.user).first()
+        return Response(self.get_serializer(instance, many=False).data, status=status.HTTP_200_OK)
