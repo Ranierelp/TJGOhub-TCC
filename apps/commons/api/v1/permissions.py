@@ -1,7 +1,5 @@
 from rest_framework import permissions
 
-from tools.utils import get_user_data
-
 
 class MineOrReadOnly(permissions.BasePermission):
     def has_permission(self, request, view):
@@ -32,9 +30,7 @@ class MineOrReadOnly(permissions.BasePermission):
         if request.method in permissions.SAFE_METHODS:
             return True
 
-        profile = get_user_data(request)
-
-        if not profile and not request.user:
+        if not request.user:
             return False
 
         attributes = ["user", "broker", "agent"]
