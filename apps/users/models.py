@@ -3,7 +3,6 @@ from django.contrib.auth.models import AbstractBaseUser, PermissionsMixin
 from django.core.exceptions import ValidationError
 from django.core.validators import validate_email
 from django.db import models
-from django.db.models import Q
 from django.utils import timezone
 from django.utils.translation import gettext_lazy as _
 
@@ -72,7 +71,6 @@ class User(AbstractBaseUser, BaseModel, PermissionsMixin):
         ordering = ["-created_at"]
         indexes = [
             models.Index(fields=["email"]),
-            models.Index(fields=["is_active", "is_staff"]),
         ]
 
     # Credentials
@@ -82,7 +80,6 @@ class User(AbstractBaseUser, BaseModel, PermissionsMixin):
 
     # Access informations and dates
     is_staff = models.BooleanField(_("Colaborador"), default=False)
-    is_active = models.BooleanField(_("Ativo"), default=True)
     date_joined = models.DateTimeField(_("Data de entrada"), default=timezone.now)
 
     # Consensus
