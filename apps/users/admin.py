@@ -19,46 +19,14 @@ from apps.commons.admin import BaseAdmin
 from apps.users import models
 
 
-class ProfileInline(admin.StackedInline):
-    model = models.Profile
-    extra = 0
-    max_num = 1
-    fk_name = "user"
-    readonly_fields = ("id", "created_at", "created_by", "updated_at", "updated_by", "deleted_at", "deleted_by")
-    exclude = ("address",)
-
-    def has_delete_permission(self, request, obj=None):
-        return False
-
-    def get_fields(self, request, obj=None):
-        fields = super(ProfileInline, self).get_fields(request, obj)
-        if not request.user.is_superuser:
-            fields = [field for field in fields if field not in [
-                "id", "created_at", "created_by", "updated_at", "updated_by", "deleted_at", "deleted_by"
-            ]]
-        return fields
-
-
 @admin.register(models.User)
 class UserAdmin(UserAdmin, BaseAdmin):
-    list_display = ("profile_name", "cpf_cnpj", "email", "is_active", "is_staff", "is_superuser",)
+    list_display = ("get_full_name", "email", "is_active", "is_staff", "is_superuser",)
     list_filter = ("is_active", "is_staff", "is_superuser",)
     date_hierarchy = "created_at"
-    search_fields = ("user__name", "email", "username", "cpf_cnpj",)
-    ordering = ("user__name", "-created_at")
-    inlines = (ProfileInline,)
+    search_fields = ("first_name", "last_name", "email",)
+    ordering = ("first_name", "last_name", "-created_at")
     change_list_template = "admin/change_list.html"
-
-    def get_queryset(self, request):
-        qs = super().get_queryset(request)
-        qs = qs.annotate(profile_name=F("user__name"))
-        return qs.order_by("profile_name")
-
-    def profile_name(self, obj):
-        return obj.get_profile().name if obj.get_profile() else obj.email
-
-    profile_name.admin_order_field = "profile_name"
-    profile_name.short_description = "Nome"
 
     fieldsets = (
         (
@@ -66,17 +34,16 @@ class UserAdmin(UserAdmin, BaseAdmin):
             {
                 "fields": (
                     "email",
-                    # "username",
                     "password",
                 )
             },
         ),
         (
-            _("Documentos"),
+            _("Informações Pessoais"),
             {
                 "fields": (
-                    "cpf_cnpj",
-                    "rg",
+                    "first_name",
+                    "last_name",
                 )
             },
         ),
@@ -95,9 +62,7 @@ class UserAdmin(UserAdmin, BaseAdmin):
             _("Status"),
             {
                 "fields": (
-                    "status",
                     "is_active",
-                    "first_login_accomplished",
                 )
             },
         ),
@@ -107,7 +72,6 @@ class UserAdmin(UserAdmin, BaseAdmin):
                 "fields": (
                     "terms",
                     "receive_emails",
-                    "other_emails",
                 )
             },
         ),
@@ -129,7 +93,7 @@ class UserAdmin(UserAdmin, BaseAdmin):
             None,
             {
                 "classes": ("wide",),
-                "fields": ("email", "cpf_cnpj", "password1", "password2"),
+                "fields": ("email", "first_name", "last_name", "password1", "password2"),
             },
         ),
         (
@@ -140,11 +104,6 @@ class UserAdmin(UserAdmin, BaseAdmin):
             }
         ),
     )
-
-    def user_profile_name(self, obj):
-        return obj.get_profile().name if obj.get_profile() else obj.email
-
-    user_profile_name.short_description = "Nome"
 
     def get_readonly_fields(self, request, obj=None):
         if obj:
@@ -157,8 +116,7 @@ class UserAdmin(UserAdmin, BaseAdmin):
             new_fieldsets = []
             for name, data in fieldsets:
                 fields = [field for field in data["fields"] if field not in [
-                    "is_staff", "is_superuser", "groups", "user_permissions", "id", "status",
-                    "first_login_accomplished",
+                    "is_staff", "is_superuser", "groups", "user_permissions", "id",
                 ]]
                 if fields:
                     new_fieldsets.append((name, {"fields": fields}))
@@ -172,8 +130,8 @@ class UserAdmin(UserAdmin, BaseAdmin):
 
     def get_list_display(self, request):
         if not request.user.is_superuser:
-            return ("profile_name", "cpf_cnpj", "email", "is_active",)
-        return ("profile_name", "cpf_cnpj", "email", "is_active", "is_staff", "is_superuser",)
+            return ("get_full_name", "email", "is_active",)
+        return ("get_full_name", "email", "is_active", "is_staff", "is_superuser",)
 
     def get_urls(self):
         urls = super().get_urls()
@@ -221,12 +179,16 @@ class UserAdmin(UserAdmin, BaseAdmin):
                 adm = models.User.objects.get(email="admin@exemple.com.br")
 
                 try:
+                    first_name = row.get("first_name", "")
+                    last_name = row.get("last_name", "")
+
                     user, created = models.User.objects.filter(
                         Q(email=email)
                     ).get_or_create(
                         email=email,
                         defaults={
-                            "cpf_cnpj": str(row["cpf_cnpj"]).replace("-", "").replace("/", "").replace(".", ""),
+                            "first_name": first_name,
+                            "last_name": last_name,
                             "created_by": adm
                         }
                     )
@@ -244,28 +206,6 @@ class UserAdmin(UserAdmin, BaseAdmin):
                             action_flag=ADDITION,
                             change_message=_('Created') + ' ' + str(user)
                         )
-
-                        try:
-                            profile, created = models.Profile.objects.filter(user=user).get_or_create(
-                                name=row["name"],
-                                user=user,
-                                defaults={
-                                    "name": row["name"],
-                                    "created_by": adm
-                                }
-                            )
-
-                            if created:
-                                LogEntry.objects.log_action(
-                                    user_id=request.user.pkid,
-                                    content_type_id=ContentType.objects.get_for_model(profile).pk,
-                                    object_id=profile.pk,
-                                    object_repr=str(profile),
-                                    action_flag=ADDITION,
-                                    change_message=_('Created') + ' ' + str(profile)
-                                )
-                        except IntegrityError:
-                            continue
 
                 except IntegrityError:
                     continue
