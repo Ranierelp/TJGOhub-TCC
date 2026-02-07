@@ -74,104 +74,9 @@ class UserOnboardingViewSet(viewsets.ViewSet, generics.GenericAPIView):
             serializer.is_valid(raise_exception=True)
             serializer.save()
 
-            profile, created = apps.get_model("users", "Profile").objects.get_or_create(user=self.request.user,
-                                                                                        defaults={
-                                                                                            "name": self.request.data[
-                                                                                                "name"],
-                                                                                            "cellphone":
-                                                                                                self.request.data[
-                                                                                                    "cellphone"]
-                                                                                        })
-
-            if not profile.address:
-                address = apps.get_model("commons", "Address").objects.create(
-                    cep=request.data["cep"],
-                    state=request.data["state"],
-                    city=request.data["city"],
-                    district=request.data["district"],
-                    street=request.data["street"],
-                    number=request.data["number"],
-                    complement=request.data["complement"]
-                )
-
-                profile.address = address
-                profile.save()
-
             return Response(serializers.UserSerializer(self.request.user).data, status=status.HTTP_200_OK)
         else:
             raise exceptions.AlreadyDidFirstLogin
-
-
-class ProfileViewSet(BaseModelApiViewSet):
-    model = apps.get_model("users", "Profile")
-    permission_classes = [MineOrReadOnly]
-
-    @action(
-        methods=["get"],
-        detail=False,
-        url_path="mine",
-        permission_classes=[IsAuthenticated],
-    )
-    def get_mine(self, request, *args, **kwargs):
-        instance = self.model.objects.filter(user=self.request.user).first()
-        return Response(self.get_serializer(instance, many=False).data, status=status.HTTP_200_OK)
-
-    @action(
-        methods=["patch"],
-        detail=False,
-        url_path="update-mine",
-        permission_classes=[IsAuthenticated],
-    )
-    def update_mine(self, request, *args, **kwargs):
-        instance = self.model.objects.filter(user=self.request.user).first()
-
-        data = {
-            "is_active": True,
-            "groups": [group.pk for group in self.request.user.groups.all()],
-        }
-
-        optional_fields = ["name", "cellphone", "cep", "state", "city", "district", "street", "number", "complement",
-                           "avatar"]
-
-        for field in optional_fields:
-            if field in request.data:
-                data[field] = request.data[field]
-
-        if "name" in data and not data["name"]:
-            return Response(data={"error": _(u"É necessário um nome")}, status=status.HTTP_400_BAD_REQUEST)
-
-        serializer = serializers.ProfileUpdateSerializer(data=data)
-        serializer.is_valid(raise_exception=True)
-
-        profile_data = {
-            "name": self.request.data.get("name", instance.name),
-            "avatar": self.request.data.get("avatar", instance.avatar),
-            "cellphone": self.request.data.get("cellphone", instance.cellphone),
-        }
-
-        profile, created = apps.get_model("users", "Profile").objects.update_or_create(
-            user=self.request.user,
-            defaults=profile_data
-        )
-
-        if instance.address:
-            address_data = {
-                "cep": request.data.get("cep", instance.address.cep),
-                "state": request.data.get("state", instance.address.state),
-                "city": request.data.get("city", instance.address.city),
-                "district": request.data.get("district", instance.address.district),
-                "street": request.data.get("street", instance.address.street),
-                "number": request.data.get("number", instance.address.number),
-                "complement": request.data.get("complement", instance.address.complement),
-            }
-
-            # Atualiza os campos do endereço
-            for key, value in address_data.items():
-                setattr(profile.address, key, value)
-
-            profile.address.save()
-
-        return Response(status=status.HTTP_200_OK)
 
 
 class EmailTokenObtainPairView(TokenObtainPairView):
@@ -200,7 +105,7 @@ class EmailTokenObtainPairView(TokenObtainPairView):
             response_data["user"] = {
                 "id": user.pkid,
                 "email": user.email,
-                "name": user.get_profile().name if user.get_profile() else "",
+                "name": user.get_full_name(),
                 "is_active": user.is_active
             }
 
@@ -208,14 +113,14 @@ class EmailTokenObtainPairView(TokenObtainPairView):
             raise InvalidToken(e.args[0])
 
         return Response(response_data, status=status.HTTP_200_OK)
-    
+
 
 class LogoutView(APIView):
     permission_classes = [IsAuthenticated]
 
     def post(self, request):
         refresh_token = request.data.get("refresh")
-        
+
         if not refresh_token:
             return Response({"error": "Refresh token is required."}, status=status.HTTP_400_BAD_REQUEST)
 
