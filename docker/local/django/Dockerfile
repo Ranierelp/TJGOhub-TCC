@@ -74,7 +74,7 @@ ENTRYPOINT ["/entrypoint"]
 # Cria o grupo e usuário com UID/GID 1001 (mesmo usado no docker-compose)
 RUN groupadd -g 1001 appgroup && useradd -u 1001 -g 1001 -ms /bin/bash appuser
 
-# Cria o diretório de logs com as permissões corretas
-RUN mkdir -p /app/tjgohub/logs && chown -R 1001:1001 /app/tjgohub/logs
+# Cria os diretórios de logs e media com as permissões corretas
+RUN mkdir -p /app/tjgohub/logs /app/tjgohub/media && chown -R 1001:1001 /app/tjgohub/logs /app/tjgohub/media
 
 USER appuser
