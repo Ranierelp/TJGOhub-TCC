@@ -11,9 +11,8 @@ from typing import Union
 
 import boto3
 import pandas as pd
-from django.apps import apps
 from django.conf import settings
-from django.core.exceptions import MultipleObjectsReturned, ValidationError
+from django.core.exceptions import ValidationError
 from django.core.files.uploadedfile import InMemoryUploadedFile
 from django.core.mail import EmailMultiAlternatives
 from django.template.loader import render_to_string
@@ -265,43 +264,6 @@ def str_to_bool(s):
         return False
     else:
         raise ValueError
-
-
-def get_user_data(request):
-    """Obtém o perfil do usuário autenticado a partir do request.
-
-    Busca o perfil associado ao usuário logado, tratando casos
-    onde o perfil não existe ou há múltiplos perfis.
-
-    Args:
-        request: Objeto HttpRequest do Django contendo o usuário.
-
-    Returns:
-        Profile or None: Perfil do usuário se encontrado, None caso contrário.
-
-    Example:
-        >>> def minha_view(request):
-        ...     perfil = get_user_data(request)
-        ...     if perfil:
-        ...         print(f"Usuário: {perfil.user.username}")
-        ...     else:
-        ...         print("Perfil não encontrado")
-
-    Note:
-        Retorna None em caso de:
-        - Perfil não existe (DoesNotExist)
-        - Múltiplos perfis encontrados (MultipleObjectsReturned)
-        - Erro de tipo (TypeError)
-
-    """
-    Perfil = apps.get_model("users", "Profile")
-
-    try:
-        profile = Perfil.objects.get(user=request.user)
-    except (Perfil.DoesNotExist, MultipleObjectsReturned, TypeError):
-        profile = None
-
-    return profile
 
 
 DIVISOR = 11
