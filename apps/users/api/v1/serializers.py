@@ -1,6 +1,5 @@
 import collections
 
-from django.apps import apps
 from django.contrib.auth import get_user_model
 from django.contrib.auth.hashers import make_password
 from django.contrib.auth.models import Group
@@ -18,7 +17,6 @@ from rest_framework_simplejwt.serializers import (
 from rest_framework_simplejwt.tokens import RefreshToken
 from tools.utils import validate_cellphone, validate_cpf_and_cnpj
 
-from apps.commons.api.v1.serializers import BaseSerializer
 from apps.users import models
 
 """
@@ -33,8 +31,6 @@ class GroupSerializer(serializers.ModelSerializer):
 
 
 class UserSerializer(serializers.ModelSerializer):
-    profile = serializers.SerializerMethodField(read_only=True)
-
     def to_representation(self, instance):
         representation = super(UserSerializer, self).to_representation(instance)
 
@@ -65,9 +61,6 @@ class UserSerializer(serializers.ModelSerializer):
         if self.validated_data.get("password"):
             instance.set_password(self.validated_data.get("password"))
         return instance
-
-    def get_profile(self, instance):
-        return ProfileSerializer(models.Profile.objects.filter(user=instance).first(), many=False).data
 
 
 class UserUpdateSerializer(serializers.ModelSerializer):
@@ -142,19 +135,6 @@ class UserOnboardingSerializer(serializers.ModelSerializer):
         )
 
 
-class ProfileUpdateSerializer(serializers.Serializer):
-    name = serializers.CharField(required=False, allow_blank=True)
-    cellphone = serializers.CharField(required=False, allow_blank=True)
-    cep = serializers.CharField(required=False, allow_blank=True)
-    state = serializers.CharField(required=False, allow_blank=True)
-    city = serializers.CharField(required=False, allow_blank=True)
-    district = serializers.CharField(required=False, allow_blank=True)
-    street = serializers.CharField(required=False, allow_blank=True)
-    number = serializers.CharField(required=False, allow_blank=True)
-    complement = serializers.CharField(required=False, allow_blank=True)
-    avatar = serializers.FileField(required=False)
-
-
 class UserRegisterSerializer(serializers.ModelSerializer):
     password1 = serializers.CharField(required=True, write_only=True)
     password2 = serializers.CharField(required=True, write_only=True)
@@ -212,20 +192,6 @@ class UserRegisterSerializer(serializers.ModelSerializer):
         if self.validated_data.get("password1"):
             instance.set_password(self.validated_data.get("password1"))
         return instance
-
-
-class ProfileSerializer(BaseSerializer):
-    class Meta(BaseSerializer.Meta):
-        model = apps.get_model("users", "Profile")
-
-    def to_representation(self, instance):
-        representation = super(ProfileSerializer, self).to_representation(instance)
-
-        if instance.address:
-            BaseSerializer.Meta.model = apps.get_model("commons", "Address")
-            representation["address"] = BaseSerializer(instance.address, many=False).data
-
-        return representation
 
 
 """
