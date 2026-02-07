@@ -38,11 +38,3 @@ def post_save_user(sender, instance, created, raw, using, *args, **kwargs):
     ]
 
 
-@receiver(signals.pre_save, sender=models.Profile)
-def profile_pre_save_signal(sender, instance, *args, **kwargs):
-    if (
-        instance.name
-        and isinstance(instance.name, str)
-        and not instance.name.isupper()
-    ):
-        instance.name = str(instance.name).upper()
