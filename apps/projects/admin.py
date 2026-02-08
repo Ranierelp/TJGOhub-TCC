@@ -9,10 +9,10 @@ from django.urls import reverse
 from django.db.models import Count
 
 from apps.commons.admin import BaseAdmin
-from apps.core import models
+from apps.projects.models import Project
 
 
-@admin.register(models.Project)
+@admin.register(Project)
 class ProjectAdmin(BaseAdmin):
     """
     Admin para gerenciamento de projetos.
