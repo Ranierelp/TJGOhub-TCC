@@ -119,4 +119,4 @@ class User(AbstractBaseUser, BaseModel, PermissionsMixin):
         return {key: value for key, value in self.__dict__.items() if key not in self._excluded_fields}
 
     def __str__(self):
-        return f"{self.first_name} {self.last_name}" if self.first_name or self.last_name else self.email
+       return self.get_full_name()
