@@ -151,14 +151,6 @@ class TestCase(BaseModel):
         help_text=_("ID único para vincular com código (ex: 'auth-login-valid')")
     )
 
-    created_by = models.ForeignKey(
-        'users.User',
-        on_delete=models.SET_NULL,
-        null=True,
-        related_name='test_cases_created',
-        verbose_name=_("Criado por")
-    )
-
     last_modified_by = models.ForeignKey(
         'users.User',
         on_delete=models.SET_NULL,

@@ -107,12 +107,6 @@ class Environment(BaseModel):
     def clean(self):
         super().clean()
 
-        # Validar URL
-        if not self.base_url:
-            raise ValidationError({
-                'base_url': _("URL base é obrigatória.")
-            })
-
         # Validar nome único por projeto
         if self.name and self.project_id:
             existing = Environment.objects.filter(

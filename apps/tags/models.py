@@ -83,7 +83,7 @@ class Tag(models.Model):
         """Sobrescreve save para normalizar nome e validar unicidade."""
         # Normalizar nome (capitalize)
         if self.name:
-            self.name = self.name.strip().title()
+            self.name = self.name.strip()
 
         super().save(*args, **kwargs)
 

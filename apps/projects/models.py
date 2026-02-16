@@ -52,7 +52,6 @@ class Project(BaseModel):
     slug = models.SlugField(
         _("Slug"),
         max_length=255,
-        unique=True,
         help_text=_("URL-friendly name (gerado automaticamente)")
     )
 
