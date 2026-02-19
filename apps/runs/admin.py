@@ -357,6 +357,11 @@ class TestRunAdmin(BaseAdmin):
 
         for test_run in queryset:
             test_run.calculate_metrics()
+            test_run.save(update_fields=[
+                'total_tests', 'passed_tests', 'failed_tests',
+                'skipped_tests', 'flaky_tests', 'duration_seconds',
+                'updated_at',
+            ])
             updated += 1
 
         self.message_user(
