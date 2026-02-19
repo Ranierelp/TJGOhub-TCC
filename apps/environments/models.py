@@ -101,8 +101,24 @@ class Environment(BaseModel):
 
     def save(self, *args, **kwargs):
         if not self.slug:
-            self.slug = slugify(self.name)
+            self.slug = self._generate_unique_slug()
         super().save(*args, **kwargs)
+
+    def _generate_unique_slug(self):
+        """Gera um slug único por projeto.
+
+        Se o slug já existir no projeto ativo, adiciona sufixo numérico
+        (ex: producao, producao-2, producao-3, ...).
+        """
+        base_slug = slugify(self.name)
+        slug = base_slug
+        counter = 1
+        while Environment.objects.filter(
+            project=self.project, slug=slug, is_active=True
+        ).exclude(pk=self.pk).exists():
+            slug = f"{base_slug}-{counter}"
+            counter += 1
+        return slug
 
     def clean(self):
         super().clean()
