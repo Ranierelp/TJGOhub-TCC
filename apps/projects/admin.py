@@ -94,7 +94,7 @@ class ProjectAdmin(BaseAdmin):
     )
 
     # Campos que não podem ser editados
-    readonly_fields = BaseAdmin.readonly_fields + ('slug',)
+    readonly_fields = BaseAdmin.readonly_fields + ('slug', 'is_active')
 
     # Campos que aparecem ao criar (excluir readonly)
     def get_fields(self, request, obj=None):
