@@ -21,7 +21,6 @@ erDiagram
         varchar base_url
         varchar env_type
         boolean is_active
-        json config
         timestamp created_at
         timestamp updated_at
         uuid project_id FK
@@ -30,7 +29,6 @@ erDiagram
     TAG {
         uuid id PK
         varchar name UK
-        varchar slug UK
         varchar color
         text description
         timestamp created_at
@@ -44,6 +42,7 @@ erDiagram
         uuid id PK
         varchar case_id UK
         varchar title
+        varchar slug
         varchar status
         varchar module
         text objective
@@ -51,14 +50,28 @@ erDiagram
         text postconditions
         text expected_result
         text observations
-        varchar spec_path
         varchar test_title
         varchar playwright_id UK
+        boolean is_active
         timestamp created_at
         timestamp updated_at
         uuid project_id FK
         uuid created_by_id FK
         uuid last_modified_by_id FK
+    }
+
+    TEST_CASE_ATTACHMENT {
+        uuid id PK
+        varchar title
+        text description
+        varchar attachment_type
+        varchar file
+        integer order
+        boolean is_active
+        timestamp created_at
+        timestamp updated_at
+        uuid test_case_id FK
+        uuid uploaded_by_id FK
     }
 
     TEST_CASE_TAGS {
@@ -236,9 +249,11 @@ erDiagram
     %% TestCase relacionamentos
     TEST_CASE ||--o{ TEST_RESULT : "generates"
     TEST_CASE ||--o{ TEST_CASE_TAGS : "has"
+    TEST_CASE ||--o{ TEST_CASE_ATTACHMENT : "has"
     TEST_CASE ||--o| FLAKINESS_METRIC : "has"
     USER ||--o{ TEST_CASE : "creates"
     USER ||--o{ TEST_CASE : "modifies"
+    USER ||--o{ TEST_CASE_ATTACHMENT : "uploads"
 
     %% Tag relacionamentos
     TAG ||--o{ TEST_CASE_TAGS : "categorizes"

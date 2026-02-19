@@ -26,25 +26,21 @@ classDiagram
         +String base_url
         +String env_type
         +Boolean is_active
-        +JSON config
         +DateTime created_at
         +DateTime updated_at
         +Project project
-        --
-        +validate_url()
-        +test_connection()
     }
 
     class Tag {
         +UUID id
         +String name
-        +String slug
         +String color
         +Text description
         +DateTime created_at
         --
         +get_test_cases()
         +get_usage_count()
+        +is_in_use()
     }
 
     %% ============================================
@@ -55,6 +51,7 @@ classDiagram
         +UUID id
         +String case_id
         +String title
+        +String slug
         +String status
         +String module
         +Text objective
@@ -62,9 +59,9 @@ classDiagram
         +Text postconditions
         +Text expected_result
         +Text observations
-        +String spec_path
         +String test_title
         +String playwright_id
+        +Boolean is_active
         +DateTime created_at
         +DateTime updated_at
         +Project project
@@ -77,6 +74,21 @@ classDiagram
         +get_last_results(n)
         +calculate_flakiness()
         +get_success_rate()
+    }
+
+    class TestCaseAttachment {
+        +UUID id
+        +String title
+        +Text description
+        +String attachment_type
+        +File file
+        +Integer order
+        +Boolean is_active
+        +DateTime created_at
+        +TestCase test_case
+        +User uploaded_by
+        --
+        +is_image()
     }
 
     %% ============================================
@@ -121,7 +133,7 @@ classDiagram
         +Float duration_seconds
         +Text error_message
         +Text stack_trace
-        +String retry_number
+        +Integer retry_number
         +JSON metadata
         +DateTime executed_at
         +DateTime created_at
@@ -254,10 +266,12 @@ classDiagram
 
     %% TestCase relacionamentos
     TestCase "1" --> "0..*" TestResult : generates
+    TestCase "1" --> "0..*" TestCaseAttachment : has
     TestCase "0..*" --> "0..*" Tag : categorized_by
     TestCase "1" --> "0..1" FlakinessMetric : has
     TestCase "0..*" --> "1" User : created_by
     TestCase "0..*" --> "1" User : modified_by
+    TestCaseAttachment "0..*" --> "1" User : uploaded_by
 
     %% TestRun relacionamentos
     TestRun "1" --> "1" Environment : runs_on

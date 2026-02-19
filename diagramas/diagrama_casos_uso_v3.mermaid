@@ -89,10 +89,14 @@ flowchart TB
     Admin -.-> UC06
     Admin -.-> UC36
     Admin -.-> UC37
+    Admin -.-> UC38
+    Admin -.-> UC39
     Admin -.-> UC40
     Admin -.-> UC41
 
     %% RELACIONAMENTOS - QA LEAD
+    QALead -.-> UC38
+    QALead -.-> UC39
     QALead -.-> UC01
     QALead -.-> UC02
     QALead -.-> UC04
@@ -121,6 +125,8 @@ flowchart TB
     QALead -.-> UC35
 
     %% RELACIONAMENTOS - QA ANALYST
+    QAAnalyst -.-> UC38
+    QAAnalyst -.-> UC39
     QAAnalyst -.-> UC04
     QAAnalyst -.-> UC07
     QAAnalyst -.-> UC08
@@ -144,6 +150,8 @@ flowchart TB
     QAAnalyst -.-> UC34
 
     %% RELACIONAMENTOS - DESENVOLVEDOR
+    Dev -.-> UC38
+    Dev -.-> UC39
     Dev -.-> UC04
     Dev -.-> UC12
     Dev -.-> UC19
@@ -154,6 +162,8 @@ flowchart TB
     Dev -.-> UC34
 
     %% RELACIONAMENTOS - VIEWER
+    Viewer -.-> UC38
+    Viewer -.-> UC39
     Viewer -.-> UC04
     Viewer -.-> UC12
     Viewer -.-> UC19
