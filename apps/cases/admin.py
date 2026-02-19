@@ -101,7 +101,7 @@ class TestCaseAttachmentAdmin(BaseAdmin):
 
     autocomplete_fields = ['test_case']
 
-    readonly_fields = ('preview_full', 'uploaded_by')
+    readonly_fields = ('preview_full', 'uploaded_by', 'is_active', 'id','created_at', 'updated_at', 'deleted_at')
 
     fieldsets = (
         (
@@ -132,6 +132,7 @@ class TestCaseAttachmentAdmin(BaseAdmin):
                     'uploaded_by',
                     'created_at',
                     'updated_at',
+                    'deleted_at',
                 )
             }
         ),
@@ -348,6 +349,7 @@ class TestCaseAdmin(BaseAdmin):
     readonly_fields = BaseAdmin.readonly_fields + (
         'slug',
         'last_modified_by',
+        'is_active',
     )
 
     # Inline de anexos
