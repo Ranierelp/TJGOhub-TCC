@@ -146,6 +146,7 @@ class TestRunAdmin(BaseAdmin):
     readonly_fields = BaseAdmin.readonly_fields + (
         'run_id',
         'triggered_by',
+        'is_active',
     )
 
     # =============================================================================
