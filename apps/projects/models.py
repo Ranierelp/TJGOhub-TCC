@@ -75,8 +75,18 @@ class Project(BaseModel):
         super().save(*args, **kwargs)
 
     def _generate_unique_slug(self):
-        """Gera um slug único baseado no nome do projeto."""
-        return slugify(self.name)
+        """Gera um slug único baseado no nome do projeto.
+
+        Se o slug já existir em um projeto ativo, adiciona sufixo numérico
+        (ex: tjgo-portal, tjgo-portal-2, tjgo-portal-3, ...).
+        """
+        base_slug = slugify(self.name)
+        slug = base_slug
+        counter = 1
+        while Project.objects.filter(slug=slug, is_active=True).exclude(pk=self.pk).exists():
+            slug = f"{base_slug}-{counter}"
+            counter += 1
+        return slug
 
     def clean(self):
         if self.name:
