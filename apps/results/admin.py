@@ -121,6 +121,7 @@ class TestResultAdmin(BaseAdmin):
         return qs.select_related('test_run', 'test_case', 'test_run__project')
 
     def has_add_permission(self, request):
+        # Resultados são criados apenas via parser de relatório XML, nunca manualmente.
         return False
 
     def has_delete_permission(self, request, obj=None):
