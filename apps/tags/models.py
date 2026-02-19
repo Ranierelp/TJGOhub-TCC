@@ -1,7 +1,6 @@
 from django.db import models
 from django.core.exceptions import ValidationError
 from django.core.validators import RegexValidator
-from django.utils.text import slugify
 from django.utils.translation import gettext_lazy as _
 import uuid
 
@@ -32,7 +31,6 @@ class Tag(models.Model):
         # Índices
         indexes = [
             models.Index(fields=['name']),
-            models.Index(fields=['slug']),
         ]
 
     # =============================================================================
