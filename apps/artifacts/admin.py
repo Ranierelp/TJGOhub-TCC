@@ -312,6 +312,14 @@ class ArtifactAdmin(BaseAdmin):
         import io
         from django.http import HttpResponse
 
+        if queryset.count() > 50:
+            self.message_user(
+                request,
+                _('Selecione no máximo 50 artefatos por vez.'),
+                level='error',
+            )
+            return
+
         # Criar ZIP em memória
         zip_buffer = io.BytesIO()
 
