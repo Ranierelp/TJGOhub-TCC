@@ -26,7 +26,6 @@ BASE_URL = env("BASE_URL")
 LOCAL_APPS = [
     "apps.users",
     "apps.commons",
-    "apps.core",
     "apps.honeypot",
     "apps.artifacts",
     "apps.cases",
