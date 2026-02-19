@@ -96,7 +96,7 @@ class EnvironmentAdmin(BaseAdmin):
         ),
     )
 
-    readonly_fields = BaseAdmin.readonly_fields + ('slug',)
+    readonly_fields = BaseAdmin.readonly_fields + ('slug', 'is_active')
 
     # Campos obrigatórios
     def get_fields(self, request, obj=None):
