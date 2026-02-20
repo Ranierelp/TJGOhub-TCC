@@ -1,8 +1,5 @@
 from django.db import models
-
-from django.core.validators import URLValidator
 from django.core.exceptions import ValidationError
-from django.utils.text import slugify
 from django.utils.translation import gettext_lazy as _
 
 from apps.commons.models import BaseModel
@@ -16,7 +13,7 @@ class Environment(BaseModel):
     - Homologação/Staging
     - Produção
 
-    Cada ambiente possui uma URL base e configurações específicas.
+    Cada ambiente possui uma URL base e um tipo único por projeto.
     """
 
     # Tipos de ambiente
@@ -33,25 +30,19 @@ class Environment(BaseModel):
     class Meta(BaseModel.Meta):
         verbose_name = _("Ambiente")
         verbose_name_plural = _("Ambientes")
-        ordering = ['project', 'name']
+        ordering = ['project', 'env_type']
 
         constraints = [
             models.UniqueConstraint(
-                fields=['project', 'name'],
+                fields=['project', 'env_type'],
                 condition=models.Q(is_active=True),
-                name='unique_environment_name_per_project'
-            ),
-            models.UniqueConstraint(
-                fields=['project', 'slug'],
-                condition=models.Q(is_active=True),
-                name='unique_environment_slug_per_project'
+                name='unique_environment_type_per_project'
             ),
         ]
 
         indexes = [
             models.Index(fields=['project', 'is_active']),
             models.Index(fields=['env_type']),
-            models.Index(fields=['name']),
         ]
 
     # ============================================================================
@@ -64,18 +55,6 @@ class Environment(BaseModel):
         related_name='environments',
         verbose_name=_("Projeto"),
         help_text=_("Projeto ao qual este ambiente pertence")
-    )
-
-    name = models.CharField(
-        _("Nome"),
-        max_length=100,
-        help_text=_("Nome do ambiente (ex: 'Desenvolvimento', 'Produção')")
-    )
-
-    slug = models.SlugField(
-        _("Slug"),
-        max_length=100,
-        help_text=_("URL-friendly name (gerado automaticamente)")
     )
 
     base_url = models.URLField(
@@ -97,43 +76,21 @@ class Environment(BaseModel):
     # ============================================================================
 
     def __str__(self):
-        return f"{self.project.name} - {self.name}"
-
-    def save(self, *args, **kwargs):
-        if not self.slug:
-            self.slug = self._generate_unique_slug()
-        super().save(*args, **kwargs)
-
-    def _generate_unique_slug(self):
-        """Gera um slug único por projeto.
-
-        Se o slug já existir no projeto ativo, adiciona sufixo numérico
-        (ex: producao, producao-2, producao-3, ...).
-        """
-        base_slug = slugify(self.name)
-        slug = base_slug
-        counter = 1
-        while Environment.objects.filter(
-            project=self.project, slug=slug, is_active=True
-        ).exclude(pk=self.pk).exists():
-            slug = f"{base_slug}-{counter}"
-            counter += 1
-        return slug
+        return f"{self.project.name} - {self.get_env_type_display()}"
 
     def clean(self):
         super().clean()
 
-        # Validar nome único por projeto
-        if self.name and self.project_id:
+        if self.env_type and self.project_id:
             existing = Environment.objects.filter(
                 project=self.project,
-                name__iexact=self.name,
+                env_type=self.env_type,
                 is_active=True
             ).exclude(pk=self.pk)
 
             if existing.exists():
                 raise ValidationError({
-                    'name': _("Já existe um ambiente com este nome neste projeto.")
+                    'env_type': _("Já existe um ambiente deste tipo neste projeto.")
                 })
 
     # ============================================================================
