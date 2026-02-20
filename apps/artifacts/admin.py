@@ -1,3 +1,6 @@
+import zipfile
+import io
+from django.http import HttpResponse
 from django.contrib import admin
 from django.utils.html import format_html
 from django.utils.translation import gettext_lazy as _
@@ -308,9 +311,6 @@ class ArtifactAdmin(BaseAdmin):
     @admin.action(description=_('Download selecionados (ZIP)'))
     def download_selected(self, request, queryset):
         """Cria ZIP com artefatos selecionados."""
-        import zipfile
-        import io
-        from django.http import HttpResponse
 
         if queryset.count() > 50:
             self.message_user(
