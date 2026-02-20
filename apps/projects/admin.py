@@ -139,7 +139,7 @@ class ProjectAdmin(BaseAdmin):
             return format_html('<span style="color: gray;">0</span>')
 
         # Link para filtrar ambientes deste projeto
-        url = reverse('admin:core_environment_changelist') + f'?project__id__exact={obj.pk}'
+        url = reverse('admin:environments_environment_changelist') + f'?project__id__exact={obj.pk}'
         return format_html(
             '<a href="{}" style="font-weight: bold;">{}</a>',
             url,
@@ -184,19 +184,17 @@ class ProjectAdmin(BaseAdmin):
 
     def get_queryset(self, request):
         """Otimiza queries com select_related e prefetch_related."""
-        qs = super().get_queryset(request)
-
-        # Carrega created_by de uma vez (evita N+1 queries)
-        qs = qs.select_related('created_by')
-
-        # Adiciona contadores via anotação (mais eficiente)
-        qs = qs.annotate(
-            _environments_count=Count('environments', distinct=True),
-            _test_cases_count=Count('test_cases', distinct=True),
-            _test_runs_count=Count('test_runs', distinct=True),
+        # all_objects inclui projetos arquivados (is_active=False)
+        # Necessário para que o filtro is_active funcione no admin
+        return (
+            Project.all_objects.all()
+            .select_related("created_by")
+            .annotate(
+                _environments_count=Count("environments", distinct=True),
+                _test_cases_count=Count("test_cases", distinct=True),
+                _test_runs_count=Count("test_runs", distinct=True),
+            )
         )
-
-        return qs
 
     # =============================================================================
     # AÇÕES EM LOTE
