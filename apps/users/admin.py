@@ -107,7 +107,7 @@ class UserAdmin(UserAdmin, BaseAdmin):
 
     def get_readonly_fields(self, request, obj=None):
         if obj:
-            return self.readonly_fields + ("last_login", "id", "date_joined")
+            return self.readonly_fields + ("last_login", "id", "date_joined", "is_active")
         return self.readonly_fields
 
     def get_fieldsets(self, request, obj=None):

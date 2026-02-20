@@ -51,7 +51,6 @@ class UserSerializer(serializers.ModelSerializer):
             "updated_at",
             "created_by",
             "updated_by",
-            "first_login_accomplished",
             "date_joined",
             "last_login",
         )
@@ -119,8 +118,6 @@ class UserOnboardingSerializer(serializers.ModelSerializer):
         model = models.User
         fields = (
             "name",
-            "first_login_accomplished",
-            "status",
             "is_active",
             "groups",
             "cellphone",
