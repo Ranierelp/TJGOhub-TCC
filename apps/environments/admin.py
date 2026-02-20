@@ -1,5 +1,3 @@
-# apps/core/admin.py
-
 from django.contrib import admin
 from django.utils.html import format_html
 from django.utils.translation import gettext_lazy as _
@@ -25,7 +23,6 @@ class EnvironmentAdmin(BaseAdmin):
     # =============================================================================
 
     list_display = (
-        'name',
         'project_link',
         'env_type_badge',
         'base_url_display',
@@ -42,12 +39,11 @@ class EnvironmentAdmin(BaseAdmin):
     )
 
     search_fields = (
-        'name',
         'base_url',
         'project__name',
     )
 
-    ordering = ('project', 'env_type', 'name')
+    ordering = ('project', 'env_type')
 
     list_per_page = 25
 
@@ -66,8 +62,6 @@ class EnvironmentAdmin(BaseAdmin):
             _('Informações do Ambiente'),
             {
                 'fields': (
-                    'name',
-                    'slug',
                     'base_url',
                     'env_type',
                 )
@@ -96,17 +90,7 @@ class EnvironmentAdmin(BaseAdmin):
         ),
     )
 
-    readonly_fields = BaseAdmin.readonly_fields + ('slug', 'is_active')
-
-    # Campos obrigatórios
-    def get_fields(self, request, obj=None):
-        """Remove campos readonly ao criar novo."""
-        fields = super().get_fields(request, obj)
-        if obj is None:  # Criando novo
-            exclude = ['id', 'created_at', 'created_by', 'updated_at',
-                      'updated_by', 'deleted_at', 'deleted_by', 'slug']
-            return [f for f in fields if f not in exclude]
-        return fields
+    readonly_fields = BaseAdmin.readonly_fields + ('is_active',)
 
     # Campos obrigatórios no form
     autocomplete_fields = ['project']
@@ -118,7 +102,7 @@ class EnvironmentAdmin(BaseAdmin):
     @admin.display(description=_('Projeto'), ordering='project__name')
     def project_link(self, obj):
         """Link clicável para o projeto."""
-        url = reverse('admin:core_project_change', args=[obj.project.pk])
+        url = reverse('admin:projects_project_change', args=[obj.project.pk])
         return format_html(
             '<a href="{}">{}</a>',
             url,
@@ -148,7 +132,6 @@ class EnvironmentAdmin(BaseAdmin):
     @admin.display(description=_('URL'))
     def base_url_display(self, obj):
         """URL base com link clicável."""
-        # Trunca URL se for muito longa
         display_url = obj.base_url
         if len(display_url) > 50:
             display_url = display_url[:47] + '...'
@@ -170,8 +153,6 @@ class EnvironmentAdmin(BaseAdmin):
         if count == 0:
             return format_html('<span style="color: gray;">0</span>')
 
-        # Link para filtrar execuções deste ambiente (futuro)
-        # url = reverse('admin:core_testrun_changelist') + f'?environment__id__exact={obj.pk}'
         return format_html(
             '<span style="font-weight: bold; color: green;">{}</span>',
             count
