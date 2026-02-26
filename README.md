@@ -8,7 +8,7 @@ Sistema interno para centralização e gestão de resultados de testes automatiz
 
 O **TJGO Playwright Hub** é uma plataforma desenvolvida em Django para receber, armazenar e visualizar resultados de testes automatizados end-to-end (E2E) executados com Playwright. O sistema foi projetado para funcionar como um hub central de qualidade de software, oferecendo:
 
-- **Centralização de resultados**: Recebimento de relatórios em formato JUnit XML
+- **Centralização de resultados**: Recebimento de relatórios em formato JSON
 - **Armazenamento de evidências**: Screenshots, vídeos e traces de execução
 - **Histórico por projeto e ambiente**: Rastreamento de execuções ao longo do tempo
 - **Análise de instabilidade (Flakiness)**: Identificação de testes instáveis
@@ -25,15 +25,15 @@ Este projeto foi desenvolvido como Trabalho de Conclusão de Curso (TCC), com es
 ### MVP (Escopo Inicial)
 
 - [x] CRUD dos casos de teste
-- [ ] Upload manual de relatórios JUnit XML
+- [x] Upload manual de relatórios JSON
 - [ ] Armazenamento de evidências (screenshots, vídeos, traces do Playwright)
 - [ ] Dashboard de visualização de resultados
 - [ ] Histórico de execuções por projeto
 - [ ] Filtros por ambiente (desenvolvimento, homologação, produção)
 - [ ] Identificação de testes com falhas recorrentes
 - [ ] Detecção de flakiness (testes instáveis)
-- [ ] Autenticação e controle de acesso (JWT)
-- [ ] API REST para integração
+- [x] Autenticação e controle de acesso (JWT)
+- [x] API REST para integração
 
 ### Evolução Futura
 
@@ -55,7 +55,7 @@ Este projeto foi desenvolvido como Trabalho de Conclusão de Curso (TCC), com es
 │                                                                     │
 │  ┌──────────────┐    ┌──────────────┐    ┌──────────────────────┐  │
 │  │   Frontend   │    │   API REST   │    │   Processamento de   │  │
-│  │   (Admin)    │◄──►│   (DRF)      │◄──►│   Relatórios XML     │  │
+│  │   (Admin)    │◄──►│   (DRF)      │◄──►│   Relatórios JSON    │  │
 │  └──────────────┘    └──────────────┘    └──────────────────────┘  │
 │                             │                       │               │
 │                             ▼                       ▼               │
@@ -67,8 +67,8 @@ Este projeto foi desenvolvido como Trabalho de Conclusão de Curso (TCC), com es
 └─────────────────────────────────────────────────────────────────────┘
 
 Fluxo de Dados:
-1. Upload de relatório JUnit XML (manual ou via API)
-2. Parser processa o XML e extrai resultados
+1. Upload de relatório JSON (manual ou via API)
+2. Parser processa o JSON e extrai resultados
 3. Evidências são armazenadas no storage
 4. Dados são persistidos no PostgreSQL
 5. Dashboard exibe resultados e métricas
@@ -430,7 +430,7 @@ docker-compose -f docker-compose.prod.yml up -d
 - [x] Autenticação JWT
 - [x] Models base com soft delete
 - [x] CRUD dos casos de teste
-- [ ] Parser de relatórios JUnit XML
+- [x] Parser de relatórios JSON
 - [ ] Upload e armazenamento de evidências
 - [ ] Dashboard básico de resultados
 
