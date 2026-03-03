@@ -66,8 +66,6 @@ class BaseModelManager(models.Manager):
     - Implementa hard_delete() para remoção permanente
     """
 
-    use_for_related_fields = True
-
     def __init__(self, *args, **kwargs):
         """Inicializa o manager.
 
@@ -224,11 +222,11 @@ class Email(BaseModel):
         select_on_save = True
 
     user_welcome_subject = models.CharField(_(u"Novo usuário (subject)"), max_length=255,
-                                            default=_(u"Bem-vindo - Backoffice Brasil"))
+                                            default=_(u"Bem-vindo - TJGOhub"))
     user_welcome = tinymce_models.HTMLField(_(u"Novo usuário"), blank=True, null=True,
                                             help_text=_(u"Variáveis: {{ link }}, {{ email }}"), )
     user_reset_password_subject = models.CharField(_(u"Atualizar senha (subject)"), max_length=255,
-                                                   default=_(u"Atualizar senha - Backoffice Brasil"))
+                                                   default=_(u"Atualizar senha - TJGOhub"))
     user_reset_password = tinymce_models.HTMLField(_(u"Atualizar senha"), blank=True, null=True,
                                                    help_text=_(u"Variáveis: {{ link }}, {{ email }},"), )
 
