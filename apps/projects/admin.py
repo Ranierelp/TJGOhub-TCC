@@ -155,7 +155,7 @@ class ProjectAdmin(BaseAdmin):
             return format_html('<span style="color: gray;">0</span>')
 
         # Link para filtrar casos de teste deste projeto
-        url = reverse('admin:core_testcase_changelist') + f'?project__id__exact={obj.pk}'
+        url = reverse('admin:cases_testcase_changelist') + f'?project__id__exact={obj.pk}'
         return format_html(
             '<a href="{}" style="font-weight: bold; color: blue;">{}</a>',
             url,
@@ -171,7 +171,7 @@ class ProjectAdmin(BaseAdmin):
             return format_html('<span style="color: gray;">0</span>')
 
         # Link para filtrar execuções deste projeto
-        url = reverse('admin:core_testrun_changelist') + f'?project__id__exact={obj.pk}'
+        url = reverse('admin:runs_testrun_changelist') + f'?project__id__exact={obj.pk}'
         return format_html(
             '<a href="{}" style="font-weight: bold; color: green;">{}</a>',
             url,
