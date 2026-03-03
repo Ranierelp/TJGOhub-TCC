@@ -75,6 +75,14 @@ class TestResult(BaseModel):
         help_text=_("ID único do resultado")
     )
 
+    title = models.CharField(
+        _("Título do Teste"),
+        max_length=500,
+        blank=True,
+        default="",
+        help_text=_("Título do teste conforme reportado pelo Playwright")
+    )
+
     status = models.CharField(
         _("Status"),
         max_length=20,
@@ -266,10 +274,13 @@ class TestResult(BaseModel):
     def test_name(self):
         """
         Retorna nome do teste.
+        Prioriza o título salvo diretamente, depois o TestCase vinculado.
 
         Returns:
-            str: Nome do TestCase ou "Sem vínculo"
+            str: Título do teste
         """
+        if self.title:
+            return self.title
         if self.test_case:
             return self.test_case.title
         return "Sem vínculo com caso de teste"
