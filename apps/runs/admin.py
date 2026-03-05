@@ -163,7 +163,7 @@ class TestRunAdmin(BaseAdmin):
             obj.project.name
         )
 
-    @admin.display(description=_('Ambiente'), ordering='environment__name')
+    @admin.display(description=_('Ambiente'), ordering='environment__env_type')
     def environment_link(self, obj):
         """Link para o ambiente."""
         url = reverse('admin:environments_environment_change', args=[obj.environment.pk])
@@ -180,7 +180,7 @@ class TestRunAdmin(BaseAdmin):
             '<a href="{}" style="color: {}; font-weight: bold;">{}</a>',
             url,
             color,
-            obj.environment.name
+            obj.environment.get_env_type_display()
         )
 
     @admin.display(description=_('Status'), ordering='status')
@@ -233,11 +233,11 @@ class TestRunAdmin(BaseAdmin):
             '<div style="flex: 1; background: #e9ecef; border-radius: 4px; height: 20px; overflow: hidden;">'
             '<div style="background: {}; width: {}%; height: 100%;"></div>'
             '</div>'
-            '<span style="font-weight: bold; min-width: 50px;">{:.1f}%</span>'
+            '<span style="font-weight: bold; min-width: 50px;">{}%</span>'
             '</div>',
             color,
             rate,
-            rate
+            f"{rate:.1f}"
         )
 
     @admin.display(description=_('Testes'))

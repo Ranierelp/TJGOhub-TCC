@@ -1,6 +1,6 @@
 # apps/projects/api/v1/viewsets.py
 
-from django.db.models import Count
+from django.db.models import Count, Q
 from django.utils import timezone
 from rest_framework import status
 from rest_framework.decorators import action
@@ -71,12 +71,24 @@ class ProjectViewSet(BaseModelApiViewSet):
         SerializerMethodFields sem gerar queries adicionais.
         """
         return (
-            Project.objects.all()  # apenas projetos ativos — consistente com UUIDPrimaryKeyRelatedField
+            Project.all_objects.all()  # inclui arquivados — ProjectFilter filtra por is_active
             .select_related("created_by", "updated_by")
             .annotate(
-                _environments_count=Count("environments", distinct=True),
-                _test_cases_count=Count("test_cases", distinct=True),
-                _test_runs_count=Count("test_runs", distinct=True),
+                _environments_count=Count(
+                    "environments",
+                    filter=Q(environments__is_active=True),
+                    distinct=True,
+                ),
+                _test_cases_count=Count(
+                    "test_cases",
+                    filter=Q(test_cases__is_active=True),
+                    distinct=True,
+                ),
+                _test_runs_count=Count(
+                    "test_runs",
+                    filter=Q(test_runs__is_active=True),
+                    distinct=True,
+                ),
             )
         )
 

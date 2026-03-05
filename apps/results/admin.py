@@ -14,6 +14,7 @@ class TestResultAdmin(BaseAdmin):
     """Admin para resultados individuais de testes."""
 
     list_display = (
+        'title',
         'result_id',
         'test_run_link',
         'test_case_link',
@@ -44,7 +45,7 @@ class TestResultAdmin(BaseAdmin):
 
     fieldsets = (
         (_('Identificação'), {
-            'fields': ('result_id', 'test_run', 'test_case', 'status')
+            'fields': ('title', 'result_id', 'test_run', 'test_case', 'status')
         }),
         (_('Métricas'), {
             'fields': ('duration_seconds', 'retry_number', 'executed_at')
@@ -59,7 +60,7 @@ class TestResultAdmin(BaseAdmin):
     )
 
     readonly_fields = (
-        'result_id', 'test_run', 'test_case', 'status',
+        'title', 'result_id', 'test_run', 'test_case', 'status',
         'duration_seconds', 'retry_number', 'executed_at',
         'error_message', 'stack_trace', 'metadata'
     )
