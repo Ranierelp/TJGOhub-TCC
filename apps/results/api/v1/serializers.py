@@ -30,6 +30,7 @@ class TestResultListSerializer(BaseSerializer):
             "test_run",
             "test_case",
             "test_case_title",
+            "title",
             "status",
             "status_display",
             "duration_seconds",
