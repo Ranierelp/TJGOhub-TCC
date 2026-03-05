@@ -71,7 +71,7 @@ class ProjectViewSet(BaseModelApiViewSet):
         SerializerMethodFields sem gerar queries adicionais.
         """
         return (
-            Project.all_objects.all()
+            Project.objects.all()  # apenas projetos ativos — consistente com UUIDPrimaryKeyRelatedField
             .select_related("created_by", "updated_by")
             .annotate(
                 _environments_count=Count("environments", distinct=True),
