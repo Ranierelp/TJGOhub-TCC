@@ -100,7 +100,7 @@ class Project(BaseModel):
                 })
 
     # =============================================================================
-    # MÉTODOS DE NEGÓCIO 
+    # MÉTODOS DE NEGÓCIO
     # =============================================================================
 
     def archive(self):
@@ -136,13 +136,13 @@ class Project(BaseModel):
         Returns:
             dict: Contadores de casos por status
         """
-        from django.db.models import Count, Q
+
 
         return self.test_cases.aggregate(
-            total=Count('id'),
-            active=Count('id', filter=Q(status='ACTIVE')),
-            draft=Count('id', filter=Q(status='DRAFT')),
-            deprecated=Count('id', filter=Q(status='DEPRECATED'))
+            total=models.Count('id'),
+            active=models.Count('id', filter=models.Q(status='ACTIVE')),
+            draft=models.Count('id', filter=models.Q(status='DRAFT')),
+            deprecated=models.Count('id', filter=models.Q(status='DEPRECATED'))
         )
 
     # =============================================================================
