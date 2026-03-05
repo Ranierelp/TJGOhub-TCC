@@ -68,3 +68,17 @@ class BaseSerializer(PkToIdMixin, serializers.ModelSerializer):
                                                                     allow_null=field.allow_null,
                                                                     required=field.required)
         return fields
+
+    def run_validators(self, value):
+        # Correção para PATCH com UniqueConstraint(condition=Q(is_active=True)).
+        #
+        # Problema: o DRF gera validators automáticos para UniqueConstraints com
+        # condition. Durante PATCH, campos read_only como `is_active` não estão
+        # nos attrs, causando KeyError no validator ao tentar acessar attrs['is_active'].
+        #
+        # Solução: antes de rodar os validators, injetamos o valor atual da instância
+        # para `is_active` quando ele está ausente dos attrs. O setdefault garante
+        # que não sobrescrevemos caso o campo já esteja presente.
+        if self.partial and self.instance and hasattr(self.instance, "is_active"):
+            value.setdefault("is_active", self.instance.is_active)
+        super().run_validators(value)
