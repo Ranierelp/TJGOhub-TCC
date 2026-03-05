@@ -1,5 +1,4 @@
-# apps/cases/api/v1/serializers.py
-
+from django.conf import settings
 from rest_framework import serializers
 from drf_spectacular.utils import extend_schema_field
 
@@ -25,6 +24,23 @@ class TestCaseAttachmentSerializer(BaseSerializer):
             "order",
             "created_at",
         ]
+
+
+class TestCaseAttachmentWriteSerializer(serializers.ModelSerializer):
+    """
+    Serializer de escrita para upload de anexos via action add-attachment.
+    Aceita multipart/form-data — não herda de BaseSerializer para não
+    incluir campos de rastreabilidade como write (created_by, etc.).
+    """
+
+    class Meta:
+        model = TestCaseAttachment
+        fields = ["file", "title", "description", "attachment_type", "order"]
+        extra_kwargs = {
+            "description": {"required": False, "default": ""},
+            "attachment_type":   {"required": False, "default": TestCaseAttachment.TYPE_IMAGE},
+            "order": {"required": False, "default": 0},
+        }
 
 
 class TestCaseListSerializer(BaseSerializer):
@@ -157,7 +173,7 @@ class TestCaseSerializer(BaseSerializer):
         if project:
             from apps.cases.models import TestCase as TC
             qs = TC.objects.filter(
-                project=project,
+                project__id=project,  # filtra pelo UUID público, não pelo pkid inteiro
                 case_id__iexact=value,
                 is_active=True,
             )
