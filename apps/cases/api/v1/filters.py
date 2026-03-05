@@ -42,12 +42,17 @@ class TestCaseFilter(django_filters.FilterSet):
         field_name="tags__id",
         label="Tag (UUID)",
     )
+    # Filtra pelo UUID público do projeto — substitui o ModelChoiceFilter
+    # auto-gerado que tentaria converter o UUID para pkid (inteiro)
+    project = django_filters.UUIDFilter(
+        field_name="project__id",
+        label="Projeto (UUID)",
+    )
 
     class Meta:
         model = TestCase
         fields = {
-            "project":  ["exact"],
-            "status":   ["exact"],
-            "is_active": ["exact"],
+            "status":        ["exact"],
+            "is_active":     ["exact"],
             "playwright_id": ["exact"],
         }
