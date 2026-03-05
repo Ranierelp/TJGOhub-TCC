@@ -1,12 +1,18 @@
 from django.db.models import Count
 from rest_framework import status
 from rest_framework.decorators import action
+from rest_framework.parsers import MultiPartParser, FormParser
 from rest_framework.response import Response
 from drf_spectacular.utils import extend_schema, extend_schema_view
 
 from apps.commons.api.v1.viewsets import BaseModelApiViewSet
 from apps.cases.models import TestCase
-from .serializers import TestCaseSerializer, TestCaseListSerializer
+from .serializers import (
+    TestCaseSerializer,
+    TestCaseListSerializer,
+    TestCaseAttachmentSerializer,
+    TestCaseAttachmentWriteSerializer,
+)
 from .filters import TestCaseFilter
 
 
@@ -140,3 +146,76 @@ class TestCaseViewSet(BaseModelApiViewSet):
 
         serializer = TestCaseSerializer(test_case, context={"request": request})
         return Response(serializer.data)
+
+    @extend_schema(
+        summary="Remove um anexo do caso de teste",
+        tags=["Casos de Teste"],
+        responses={204: None},
+    )
+    @action(detail=True, methods=["delete"], url_path=r"remove-attachment/(?P<attachment_id>[^/.]+)")
+    def remove_attachment(self, request, id=None, attachment_id=None):
+        """Remove um anexo/passo do caso de teste permanentemente."""
+        test_case = self.get_object()
+        attachment = test_case.attachments.filter(id=attachment_id).first()
+        if not attachment:
+            return Response(
+                {"detail": "Anexo não encontrado."},
+                status=status.HTTP_404_NOT_FOUND,
+            )
+        attachment.hard_delete()
+        return Response(status=status.HTTP_204_NO_CONTENT)
+
+    @extend_schema(
+        summary="Atualiza um anexo existente do caso de teste",
+        description="Aceita multipart/form-data. Todos os campos são opcionais (partial update).",
+        tags=["Casos de Teste"],
+        responses={200: TestCaseAttachmentSerializer},
+    )
+    @action(
+        detail=True,
+        methods=["patch"],
+        url_path=r"update-attachment/(?P<attachment_id>[^/.]+)",
+        parser_classes=[MultiPartParser, FormParser],
+    )
+    def update_attachment(self, request, id=None, attachment_id=None):
+        """Atualiza descrição e/ou imagem de um anexo existente."""
+        test_case = self.get_object()
+        attachment = test_case.attachments.filter(id=attachment_id).first()
+        if not attachment:
+            return Response(
+                {"detail": "Anexo não encontrado."},
+                status=status.HTTP_404_NOT_FOUND,
+            )
+        write_serializer = TestCaseAttachmentWriteSerializer(
+            attachment, data=request.data, partial=True
+        )
+        write_serializer.is_valid(raise_exception=True)
+        write_serializer.save()
+        read_serializer = TestCaseAttachmentSerializer(attachment, context={"request": request})
+        return Response(read_serializer.data)
+
+    @extend_schema(
+        summary="Faz upload de anexo para o caso de teste",
+        description="Aceita multipart/form-data com file, title, description, order.",
+        tags=["Casos de Teste"],
+        responses={201: TestCaseAttachmentSerializer},
+    )
+    @action(
+        detail=True,
+        methods=["post"],
+        url_path="add-attachment",
+        parser_classes=[MultiPartParser, FormParser],
+    )
+    def add_attachment(self, request, id=None):
+        """Faz upload de um anexo (imagem, PDF, etc) para o caso de teste."""
+        test_case = self.get_object()
+
+        write_serializer = TestCaseAttachmentWriteSerializer(data=request.data)
+        write_serializer.is_valid(raise_exception=True)
+        attachment = write_serializer.save(
+            test_case=test_case,
+            uploaded_by=request.user,
+        )
+
+        read_serializer = TestCaseAttachmentSerializer(attachment, context={"request": request})
+        return Response(read_serializer.data, status=status.HTTP_201_CREATED)
