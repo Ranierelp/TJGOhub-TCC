@@ -6,6 +6,8 @@ from drf_spectacular.utils import extend_schema, extend_schema_view
 
 from apps.commons.api.v1.viewsets import BaseModelApiViewSet
 from apps.runs.models import TestRun
+from apps.projects.models import Project
+from apps.environments.models import Environment
 from .serializers import TestRunSerializer, TestRunListSerializer
 from .filters import TestRunFilter
 
