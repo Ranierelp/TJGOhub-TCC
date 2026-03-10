@@ -56,6 +56,7 @@ class TestResultViewSet(
             .annotate(
                 _artifacts_count=Count("artifacts", distinct=True)
             )
+            .order_by("-executed_at")
         )
 
     def get_serializer_class(self):
