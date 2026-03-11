@@ -7,7 +7,7 @@ from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.viewsets import GenericViewSet
 from drf_spectacular.utils import extend_schema, extend_schema_view
-from apps.artifacts.api.v1.serializers import ArtifactListSerializer
+
 
 from apps.results.models import TestResult
 from .serializers import TestResultSerializer, TestResultListSerializer
@@ -101,23 +101,3 @@ class TestResultViewSet(
         serializer = TestResultSerializer(result, context={"request": request})
         return Response(serializer.data)
 
-    @extend_schema(
-        summary="Artefatos de um resultado",
-        description="Retorna os artefatos (screenshots, vídeos) deste resultado.",
-        tags=["Resultados"],
-    )
-    @action(detail=True, methods=["get"], url_path="artifacts")
-    def artifacts(self, request, id=None):
-        """
-        Atalho para listar artefatos de um resultado específico.
-        Evita que o front precise filtrar em /artifacts/?test_result=<id>.
-        """
-
-        result = self.get_object()
-        qs = result.artifacts.order_by("created_at")
-        page = self.paginate_queryset(qs)
-        if page is not None:
-            serializer = ArtifactListSerializer(page, many=True, context={"request": request})
-            return self.get_paginated_response(serializer.data)
-        serializer = ArtifactListSerializer(qs, many=True, context={"request": request})
-        return Response(serializer.data)
