@@ -7,6 +7,7 @@ from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.viewsets import GenericViewSet
 from drf_spectacular.utils import extend_schema, extend_schema_view
+from apps.artifacts.api.v1.serializers import ArtifactListSerializer
 
 from apps.results.models import TestResult
 from .serializers import TestResultSerializer, TestResultListSerializer
@@ -88,6 +89,15 @@ class TestResultViewSet(
             )
 
         result.mark_as_flaky()
+
+        test_run = result.test_run
+        test_run.calculate_metrics()
+        test_run.save(update_fields=[
+            'total_tests', 'passed_tests', 'failed_tests',
+            'skipped_tests', 'flaky_tests', 'duration_seconds',
+            'updated_at',
+        ])
+
         serializer = TestResultSerializer(result, context={"request": request})
         return Response(serializer.data)
 
@@ -102,7 +112,6 @@ class TestResultViewSet(
         Atalho para listar artefatos de um resultado específico.
         Evita que o front precise filtrar em /artifacts/?test_result=<id>.
         """
-        from apps.artifacts.api.v1.serializers import ArtifactListSerializer
 
         result = self.get_object()
         qs = result.artifacts.order_by("created_at")
