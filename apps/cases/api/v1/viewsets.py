@@ -54,6 +54,7 @@ class TestCaseViewSet(BaseModelApiViewSet):
             .select_related("project", "created_by", "updated_by", "last_modified_by")
             .prefetch_related("tags", "attachments")
             .annotate(_attachments_count=Count("attachments", distinct=True))
+            .order_by("project", "case_id")
         )
 
     def get_serializer_class(self):

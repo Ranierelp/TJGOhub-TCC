@@ -230,8 +230,6 @@ USE_TZ = True
 
 USE_I18N = True
 
-USE_L10N = True
-
 SITE_ID = 1
 
 ADMIN_URL = "secret/"

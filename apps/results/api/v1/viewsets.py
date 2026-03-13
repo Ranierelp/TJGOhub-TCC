@@ -8,6 +8,7 @@ from rest_framework.response import Response
 from rest_framework.viewsets import GenericViewSet
 from drf_spectacular.utils import extend_schema, extend_schema_view
 
+
 from apps.results.models import TestResult
 from .serializers import TestResultSerializer, TestResultListSerializer
 from .filters import TestResultFilter
@@ -56,6 +57,7 @@ class TestResultViewSet(
             .annotate(
                 _artifacts_count=Count("artifacts", distinct=True)
             )
+            .order_by("-executed_at")
         )
 
     def get_serializer_class(self):
@@ -87,27 +89,15 @@ class TestResultViewSet(
             )
 
         result.mark_as_flaky()
+
+        test_run = result.test_run
+        test_run.calculate_metrics()
+        test_run.save(update_fields=[
+            'total_tests', 'passed_tests', 'failed_tests',
+            'skipped_tests', 'flaky_tests', 'duration_seconds',
+            'updated_at',
+        ])
+
         serializer = TestResultSerializer(result, context={"request": request})
         return Response(serializer.data)
 
-    @extend_schema(
-        summary="Artefatos de um resultado",
-        description="Retorna os artefatos (screenshots, vídeos) deste resultado.",
-        tags=["Resultados"],
-    )
-    @action(detail=True, methods=["get"], url_path="artifacts")
-    def artifacts(self, request, id=None):
-        """
-        Atalho para listar artefatos de um resultado específico.
-        Evita que o front precise filtrar em /artifacts/?test_result=<id>.
-        """
-        from apps.artifacts.api.v1.serializers import ArtifactListSerializer
-
-        result = self.get_object()
-        qs = result.artifacts.order_by("created_at")
-        page = self.paginate_queryset(qs)
-        if page is not None:
-            serializer = ArtifactListSerializer(page, many=True, context={"request": request})
-            return self.get_paginated_response(serializer.data)
-        serializer = ArtifactListSerializer(qs, many=True, context={"request": request})
-        return Response(serializer.data)

@@ -3,11 +3,10 @@ from rest_framework import status
 from rest_framework.decorators import action
 from rest_framework.response import Response
 from drf_spectacular.utils import extend_schema, extend_schema_view
-
+from apps.results.models import TestResult
+from apps.results.api.v1.serializers import TestResultListSerializer
 from apps.commons.api.v1.viewsets import BaseModelApiViewSet
 from apps.runs.models import TestRun
-from apps.projects.models import Project
-from apps.environments.models import Environment
 from .serializers import TestRunSerializer, TestRunListSerializer
 from .filters import TestRunFilter
 
@@ -59,6 +58,7 @@ class TestRunViewSet(BaseModelApiViewSet):
             )
             .prefetch_related("tags")
             .annotate(_results_count=Count("test_results", distinct=True))
+            .order_by("-started_at", "-created_at")
         )
 
     def get_serializer_class(self):
@@ -208,15 +208,37 @@ class TestRunViewSet(BaseModelApiViewSet):
         """
         Atalho para listar os resultados de uma execução específica.
         Evita que o front precise filtrar em /results/?test_run=<id>.
+        Suporta ?status=PASSED|FAILED|FLAKY|SKIPPED para filtrar por status.
         """
-        from apps.results.api.v1.serializers import TestResultListSerializer
 
-        run = self.get_object()
+        run = TestRun.objects.filter(id=id).first()
+        if not run:
+            return Response(
+                {"detail": "Execução não encontrada."},
+                status=status.HTTP_404_NOT_FOUND,
+            )
+
         qs = (
             run.test_results
             .select_related("test_case")
             .order_by("executed_at")
         )
+
+        status_param = request.query_params.get("status")
+        if status_param:
+            valid_statuses = [
+                TestResult.STATUS_PASSED,
+                TestResult.STATUS_FAILED,
+                TestResult.STATUS_SKIPPED,
+                TestResult.STATUS_FLAKY,
+            ]
+            if status_param not in valid_statuses:
+                return Response(
+                    {"detail": f"Status inválido. Valores aceitos: {', '.join(valid_statuses)}"},
+                    status=status.HTTP_400_BAD_REQUEST,
+                )
+            qs = qs.filter(status=status_param)
+
         page = self.paginate_queryset(qs)
         if page is not None:
             serializer = TestResultListSerializer(page, many=True, context={"request": request})

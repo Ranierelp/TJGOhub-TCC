@@ -4,7 +4,7 @@ deep-translator==1.8.3
 deprecated==1.2.13
 django==5.0.1
 django-admin-inline-paginator==0.4.0
-django-admin-interface==0.28.3
+django-admin-interface==0.32.0
 django-appconf==1.0.5
 django-cors-headers==3.13.0
 django-crontab==0.7.1

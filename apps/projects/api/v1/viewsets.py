@@ -90,6 +90,7 @@ class ProjectViewSet(BaseModelApiViewSet):
                     distinct=True,
                 ),
             )
+            .order_by("-created_at")
         )
 
     def get_serializer_class(self):

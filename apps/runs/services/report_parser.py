@@ -24,6 +24,8 @@ from django.utils import timezone
 from apps.runs.models import TestRun
 from apps.results.models import TestResult
 from apps.cases.models import TestCase
+from apps.projects.models import Project
+from apps.environments.models import Environment
 
 logger = logging.getLogger(__name__)
 
@@ -120,13 +122,18 @@ class ReportParserService:
         """
         run = self.run_data
 
+        # Busca as instâncias pelo UUID (field id) para evitar passar UUID
+        # direto no FK que referencia pkid (BigAutoField) — causaria bigint out of range
+        project = Project.objects.get(id=run["project_id"])
+        environment = Environment.objects.get(id=run["environment_id"])
+
         # Converte timestamps ISO → datetime aware
         started_at = self._parse_datetime(run.get("started_at"))
         finished_at = self._parse_datetime(run.get("finished_at"))
 
         test_run = TestRun(
-            project_id=run["project_id"],
-            environment_id=run["environment_id"],
+            project=project,
+            environment=environment,
             status=TestRun.STATUS_COMPLETED,
             trigger_type=run.get("trigger_type", TestRun.TRIGGER_MANUAL),
             branch=run.get("branch", ""),
@@ -191,6 +198,7 @@ class ReportParserService:
         return TestResult(
             test_run=test_run,
             test_case=test_case,
+            title=item.get("title", ""),
             status=status,
             duration_seconds=item.get("duration_seconds", 0.0),
             error_message=item.get("error_message", ""),
@@ -242,13 +250,22 @@ class ReportParserService:
     # =========================================================================
 
     @staticmethod
-    def _parse_datetime(value: str | None) -> datetime | None:
+    def _parse_datetime(value) -> datetime | None:
         """
         Converte string ISO 8601 em datetime aware (UTC).
+        Também aceita datetime já convertido pelo DRF DateTimeField.
         Retorna None se valor inválido ou ausente.
         """
         if not value:
             return None
+
+        # O DRF DateTimeField já converte a string para datetime durante a validação
+        # do serializer. Se chegar aqui como datetime, apenas garante timezone UTC.
+        if isinstance(value, datetime):
+            if value.tzinfo is None:
+                return value.replace(tzinfo=dt_timezone.utc)
+            return value
+
         try:
             # O Playwright pode gerar timestamps com "Z" (UTC)
             # datetime.fromisoformat não suporta "Z", então substituímos por "+00:00"
@@ -257,6 +274,6 @@ class ReportParserService:
             if dt.tzinfo is None:
                 dt = dt.replace(tzinfo=dt_timezone.utc)
             return dt
-        except (ValueError, AttributeError):
+        except (ValueError, AttributeError, TypeError):
             logger.warning("Falha ao parsear datetime: %s", value)
             return None

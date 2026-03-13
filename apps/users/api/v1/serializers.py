@@ -15,7 +15,7 @@ from rest_framework_simplejwt.serializers import (
     TokenObtainPairSerializer as JwtTokenObtainPairSerializer,
 )
 from rest_framework_simplejwt.tokens import RefreshToken
-from tools.utils import validate_cellphone, validate_cpf_and_cnpj
+from tools.utils import validate_cellphone
 
 from apps.users import models
 
@@ -133,10 +133,12 @@ class UserOnboardingSerializer(serializers.ModelSerializer):
 
 
 class UserRegisterSerializer(serializers.ModelSerializer):
+    first_name = serializers.CharField(required=True, max_length=50)
+    last_name = serializers.CharField(required=True, max_length=50)
     password1 = serializers.CharField(required=True, write_only=True)
     password2 = serializers.CharField(required=True, write_only=True)
     email = serializers.EmailField(required=True)
-    cpf_cnpj = serializers.CharField(required=True)
+
 
     def validate(self, attrs):
         items = list(attrs.items())
@@ -150,22 +152,11 @@ class UserRegisterSerializer(serializers.ModelSerializer):
             raise serializers.ValidationError(code=404, detail=e.messages)
 
         try:
-            cpf_cnpj = validate_cpf_and_cnpj(attrs.get("cpf_cnpj"))
-            items.append(("cpf_cnpj", cpf_cnpj))
-        except ValidationError as e:
-            raise serializers.ValidationError(code=404, detail=e.messages)
-
-        try:
             models.User.objects.get(email=attrs.get("email"))
             raise serializers.ValidationError(code=404, detail=_(u"Já existe um usuário cadastrado com este e-mail."))
         except models.User.DoesNotExist:
             pass
 
-        try:
-            models.User.objects.get(cpf_cnpj=attrs.get("cpf_cnpj"))
-            raise serializers.ValidationError(code=404, detail=_(u"Já existe um usuário cadastrado com este CPF ou CNPJ."))
-        except models.User.DoesNotExist:
-            pass
 
         if attrs.get("password1") == attrs.get("password2"):
             items.append(("password", attrs.get("password1")))
@@ -181,7 +172,7 @@ class UserRegisterSerializer(serializers.ModelSerializer):
     class Meta:
         model = models.User
         fields = (
-            "email", "cpf_cnpj", "password1", "password2", "terms", "receive_emails"
+            "first_name", "last_name", "email", "password1", "password2", "terms", "receive_emails"
         )
 
     def save(self, **kwargs):

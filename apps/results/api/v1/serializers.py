@@ -20,6 +20,7 @@ class TestResultListSerializer(BaseSerializer):
         source="get_error_summary", read_only=True
     )
     test_case_title = serializers.SerializerMethodField()
+    test_case_case_id = serializers.SerializerMethodField()
     artifacts_count = serializers.SerializerMethodField()
 
     class Meta(BaseSerializer.Meta):
@@ -30,6 +31,7 @@ class TestResultListSerializer(BaseSerializer):
             "test_run",
             "test_case",
             "test_case_title",
+            "test_case_case_id",
             "title",
             "status",
             "status_display",
@@ -46,6 +48,10 @@ class TestResultListSerializer(BaseSerializer):
         if obj.test_case:
             return obj.test_case.title
         return None
+
+    @extend_schema_field(serializers.CharField(allow_null=True))
+    def get_test_case_case_id(self, obj) -> str | None:
+        return obj.test_case.case_id if obj.test_case else None
 
     @extend_schema_field(serializers.IntegerField())
     def get_artifacts_count(self, obj) -> int:
