@@ -72,6 +72,7 @@ class TagViewSet(
         return (
             Tag.objects.all()
             .annotate(_usage_count=Count("test_cases", distinct=True))
+            .order_by("name")
         )
 
     def destroy(self, request, *args, **kwargs):
