@@ -50,6 +50,37 @@ services:
       retries: 3
       start_period: 30s
 
+  celery_worker:
+    build:
+      context: .
+      dockerfile: ./docker/local/django/Dockerfile
+    image: ${API_IMAGE_NAME?A variável API_IMAGE_NAME precisa ser definida}:${API_IMAGE_TAG?A variável API_IMAGE_TAG precisa ser definida}
+    command: celery -A tjgohub worker --loglevel=info --concurrency=2
+    container_name: celery_worker
+    environment:
+      - TZ=America/Sao_Paulo
+    volumes:
+      - .:/app
+      - media_volume:/data/tjgohub/mediafiles
+    env_file:
+      - ./.envs/.local/.django
+      - ./.envs/.local/.postgres
+    depends_on:
+      - postgres
+      - redis
+    networks:
+      - tjgohub
+    deploy:
+      resources:
+        limits:
+          memory: 512M
+          cpus: "0.50"
+      restart_policy:
+        condition: on-failure
+        delay: 5s
+        max_attempts: 3
+        window: 120s
+
   postgres:
     build:
       context: .

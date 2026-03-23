@@ -360,3 +360,34 @@ SESSION_EXPIRE_AT_BROWSER_CLOSE = True
 DEFAULT_TIMEOUT = env("DEFAULT_TIMEOUT", cast=int)
 
 REDIS_URL = env("CACHE_HOST")
+
+# =============================================================================
+# CELERY — Processamento assíncrono de tasks em background
+# =============================================================================
+
+# Redis como broker: armazena a fila de tasks aguardando execução
+CELERY_BROKER_URL = REDIS_URL
+
+# Redis como backend: armazena o resultado das tasks (opcional, mas útil para debug)
+CELERY_RESULT_BACKEND = REDIS_URL
+
+# Serialização em JSON: mais seguro que pickle (padrão do Celery)
+CELERY_TASK_SERIALIZER = "json"
+CELERY_RESULT_SERIALIZER = "json"
+CELERY_ACCEPT_CONTENT = ["json"]
+
+# Timezone sincronizado com o Django
+CELERY_TIMEZONE = TIME_ZONE
+
+# Limites de tempo por task:
+# soft_time_limit: lança SoftTimeLimitExceeded quando estoura (task pode capturar e finalizar)
+# time_limit: mata o processo worker após esse tempo (mais agressivo)
+CELERY_TASK_SOFT_TIME_LIMIT = 300  # 5 minutos: avisa que está demorando
+CELERY_TASK_TIME_LIMIT = 600       # 10 minutos: mata se ultrapassar
+
+# =============================================================================
+# GITLAB — Integração para disparar pipelines via API
+# =============================================================================
+GITLAB_URL = env("GITLAB_URL", default="https://gitlab.com")
+GITLAB_PRIVATE_TOKEN = env("GITLAB_PRIVATE_TOKEN", default="")
+GITLAB_PROJECT_ID = env("GITLAB_PROJECT_ID", default="")
