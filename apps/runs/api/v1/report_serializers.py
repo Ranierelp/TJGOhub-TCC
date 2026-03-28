@@ -77,9 +77,53 @@ class ReportRunSerializer(serializers.Serializer):
     )
 
     playwright_version = serializers.CharField(allow_blank=True, default="")
-    started_at         = serializers.DateTimeField()
-    finished_at        = serializers.DateTimeField()
-    duration_seconds   = serializers.FloatField(min_value=0)
+    started_at = serializers.DateTimeField()
+    finished_at = serializers.DateTimeField()
+    duration_seconds = serializers.FloatField(min_value=0)
+
+
+# =============================================================================
+# SERIALIZER: DISPARAR PIPELINE GITLAB
+# =============================================================================
+
+class TriggerPipelineSerializer(serializers.Serializer):
+    """
+    Valida o payload para disparar uma pipeline no GitLab CI.
+
+    project_id e environment_id identificam o contexto no TJGOHub.
+    branch é o nome do branch a ser executado no GitLab.
+    """
+    project_id = serializers.UUIDField()
+    environment_id = serializers.UUIDField()
+    branch = serializers.CharField(default="main")
+
+    def validate(self, attrs):
+        project_id = attrs["project_id"]
+        environment_id = attrs["environment_id"]
+
+        try:
+            project = Project.objects.get(id=project_id, is_active=True)
+        except Project.DoesNotExist:
+            raise serializers.ValidationError({
+                "project_id": f"Projeto '{project_id}' não encontrado."
+            })
+
+        try:
+            environment = Environment.objects.get(id=environment_id, is_active=True)
+        except Environment.DoesNotExist:
+            raise serializers.ValidationError({
+                "environment_id": f"Ambiente '{environment_id}' não encontrado."
+            })
+
+        if environment.project_id != project.pk:
+            raise serializers.ValidationError({
+                "environment_id": (
+                    f"O ambiente '{environment.get_env_type_display()}' não pertence "
+                    f"ao projeto '{project.name}'."
+                )
+            })
+
+        return attrs
 
 
 # =============================================================================
@@ -126,7 +170,7 @@ class ReportUploadSerializer(serializers.Serializer):
             raise serializers.ValidationError({
                 "run": {
                     "environment_id": (
-                        f"O ambiente '{environment.name}' não pertence "
+                        f"O ambiente '{environment.get_env_type_display()}' não pertence "
                         f"ao projeto '{project.name}'."
                     )
                 }
