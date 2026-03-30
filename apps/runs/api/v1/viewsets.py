@@ -1,3 +1,4 @@
+import uuid as uuid_lib
 from django.db.models import Count
 from rest_framework import status
 from rest_framework.decorators import action
@@ -210,6 +211,14 @@ class TestRunViewSet(BaseModelApiViewSet):
         Evita que o front precise filtrar em /results/?test_run=<id>.
         Suporta ?status=PASSED|FAILED|FLAKY|SKIPPED para filtrar por status.
         """
+
+        try:
+            uuid_lib.UUID(str(id))
+        except (ValueError, AttributeError):
+            return Response(
+                {"detail": "ID inválido."},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
 
         run = TestRun.objects.filter(id=id).first()
         if not run:
