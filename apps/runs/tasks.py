@@ -10,6 +10,9 @@ Para rodar o worker:
 import logging
 
 from celery import shared_task
+from apps.runs.models import TestRun
+from apps.users.models import User
+from apps.runs.services.report_parser import ReportParserService
 
 logger = logging.getLogger(__name__)
 
@@ -32,9 +35,6 @@ def parse_report_task(self, run_id: str, report_data: dict, user_id: int):
         max_retries=3:  tenta novamente até 3 vezes antes de desistir
     """
     # Importações locais evitam problemas de importação circular no startup do Django
-    from apps.runs.models import TestRun
-    from apps.users.models import User
-    from apps.runs.services.report_parser import ReportParserService
 
     logger.info("Task iniciada | run_id=%s | user_id=%s", run_id, user_id)
 

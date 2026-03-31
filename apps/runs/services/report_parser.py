@@ -75,28 +75,69 @@ class ReportParserService:
     @transaction.atomic
     def parse(self) -> TestRun:
         """
-        Executa o parsing completo dentro de uma transaction.
+        Modo síncrono: cria o TestRun e processa tudo na mesma chamada.
 
-        Em caso de erro, tudo é revertido (nenhum TestRun parcial fica no banco).
+        Usado diretamente pela view quando Celery não está disponível,
+        ou em testes automatizados.
 
         Returns:
             TestRun criado e salvo com métricas calculadas.
         """
         logger.info(
-            "Iniciando parsing de relatório | projeto=%s | resultados=%d",
+            "Iniciando parsing síncrono | projeto=%s | resultados=%d",
             self.run_data.get("project_id"),
             len(self.results_data),
         )
 
         test_run = self._create_test_run()
+        self._finish_parse(test_run)
+        return test_run
+
+    @transaction.atomic
+    def parse_into(self, test_run: TestRun) -> None:
+        """
+        Modo assíncrono: recebe um TestRun já existente (status PENDING)
+        e preenche os resultados + métricas.
+
+        Chamado pela Celery task após o TestRun ter sido criado pela view
+        e commitado no banco.
+
+        Args:
+            test_run: TestRun já salvo com status PENDING
+        """
+        logger.info(
+            "Iniciando parsing assíncrono | run_id=%s | resultados=%d",
+            test_run.run_id,
+            len(self.results_data),
+        )
+
+        # Preenche campos do run que vieram no payload mas não foram salvos
+        # pela view (que só salvou o mínimo para responder rápido)
+        run = self.run_data
+        test_run.branch = run.get("branch", "")
+        test_run.commit_sha = run.get("commit_sha", "")
+        test_run.commit_message = run.get("commit_message", "")
+        test_run.started_at = self._parse_datetime(run.get("started_at"))
+        test_run.completed_at = self._parse_datetime(run.get("finished_at"))
+        test_run.duration_seconds = run.get("duration_seconds", 0.0)
+        test_run.save(update_fields=[
+            "branch", "commit_sha", "commit_message",
+            "started_at", "completed_at", "duration_seconds", "updated_at",
+        ])
+
+        self._finish_parse(test_run)
+
+    def _finish_parse(self, test_run: TestRun) -> None:
+        """
+        Parte comum dos dois modos: cria results, calcula métricas e marca COMPLETED.
+        """
         self._create_test_results(test_run)
 
-        # Recalcula métricas agregadas a partir dos TestResults criados
         test_run.calculate_metrics()
+        test_run.status = TestRun.STATUS_COMPLETED
         test_run.save(update_fields=[
-            "total_tests", "passed_tests", "failed_tests",
-            "skipped_tests", "flaky_tests", "duration_seconds",
-            "updated_at",
+            "status", "total_tests", "passed_tests", "failed_tests",
+            "skipped_tests", "flaky_tests", "duration_seconds", "updated_at",
         ])
 
         logger.info(
@@ -106,8 +147,6 @@ class ReportParserService:
             test_run.passed_tests,
             test_run.failed_tests,
         )
-
-        return test_run
 
     # =========================================================================
     # CRIAÇÃO DO TEST RUN
@@ -157,19 +196,34 @@ class ReportParserService:
 
     def _create_test_results(self, test_run: TestRun) -> None:
         """
-        Itera sobre results[] e cria um TestResult por item.
-        Usa bulk_create para performance.
+        Cria todos os TestResults de uma vez com bulk_create.
+
+        Por que bulk_create?
+            Sem bulk_create: N testes = N INSERTs separados no banco (lento)
+            Com bulk_create: N testes = 1 INSERT com N linhas (muito mais rápido)
+
+        Por que pré-gerar o result_id?
+            O bulk_create pula o save() do modelo, que é onde o result_id
+            normalmente é gerado. Por isso geramos o ID aqui, em Python,
+            antes de inserir.
+
+        Antes:  300 testes → 300 queries ao banco
+        Depois: 300 testes → 1 query (ou 2 se > 500 resultados)
         """
         results_to_create = []
+        prefix = f"result-{test_run.run_id}-"
 
-        for item in self.results_data:
-            test_result = self._build_test_result(test_run, item)
-            results_to_create.append(test_result)
+        # enumerate(start=1): itera com índice começando em 1
+        for index, item in enumerate(self.results_data, start=1):
+            result = self._build_test_result(test_run, item)
+            # Gera o result_id em Python em vez de deixar para o save() do modelo
+            # Formato: result-run-20260314-001-001, result-run-20260314-001-002, ...
+            result.result_id = f"{prefix}{index:03d}"
+            results_to_create.append(result)
 
-        # bulk_create ignora o override de save() do modelo (que gera result_id)
-        # Por isso usamos save() individual — aceitável para volumes < 10k
-        for result in results_to_create:
-            result.save()
+        # batch_size=500: insere de 500 em 500 para não gerar queries SQL muito longas
+        # ignore_conflicts=False (padrão): levanta erro se result_id duplicado
+        TestResult.objects.bulk_create(results_to_create, batch_size=500)
 
     def _build_test_result(self, test_run: TestRun, item: dict) -> TestResult:
         """
