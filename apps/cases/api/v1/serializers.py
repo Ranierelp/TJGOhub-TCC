@@ -69,7 +69,11 @@ class TestCaseListSerializer(BaseSerializer):
             "status",
             "status_display",
             "module",
+            "priority",
+            "assigned_to",
             "tags",
+            "kanban_column",
+            "board_position",
             "is_active",
             "created_at",
         ]
@@ -108,6 +112,9 @@ class TestCaseSerializer(BaseSerializer):
         help_text="Lista de UUIDs das tags para associar ao caso de teste",
     )
 
+    priority_display = serializers.CharField(source="get_priority_display", read_only=True)
+    assigned_to_name = serializers.SerializerMethodField()
+
     # last_modified_by é preenchido pelo viewset, nunca pelo cliente
     last_modified_by_name = serializers.SerializerMethodField()
 
@@ -135,12 +142,20 @@ class TestCaseSerializer(BaseSerializer):
             # Playwright
             "test_title",
             "playwright_id",
+            # Prioridade e responsável
+            "priority",
+            "priority_display",
+            "assigned_to",
+            "assigned_to_name",
             # Tags
             "tags",
             "tag_ids",
             # Anexos
             "attachments",
             "attachments_count",
+            # Kanban
+            "kanban_column",
+            "board_position",
             # Rastreabilidade
             "is_active",
             "created_at",
@@ -150,6 +165,12 @@ class TestCaseSerializer(BaseSerializer):
             "last_modified_by",
             "last_modified_by_name",
         ]
+
+    @extend_schema_field(serializers.CharField(allow_null=True))
+    def get_assigned_to_name(self, obj) -> str | None:
+        if obj.assigned_to_id:
+            return obj.assigned_to.get_full_name() or obj.assigned_to.email
+        return None
 
     @extend_schema_field(serializers.CharField(allow_null=True))
     def get_last_modified_by_name(self, obj) -> str | None:
@@ -187,6 +208,21 @@ class TestCaseSerializer(BaseSerializer):
 
     def create(self, validated_data):
         tag_ids = validated_data.pop("tag_ids", [])
+
+        # Auto-assign ao Backlog se nenhuma coluna foi informada
+        if 'kanban_column' not in validated_data or validated_data.get('kanban_column') is None:
+            from apps.kanban.models import KanbanColumn
+            project = validated_data.get('project')
+            # Tenta coluna do projeto primeiro, depois coluna global
+            backlog = (
+                KanbanColumn.objects.filter(project=project).order_by('order').first()
+                or KanbanColumn.objects.filter(project__isnull=True).order_by('order').first()
+            )
+            if backlog:
+                last_pos = TestCase.objects.filter(kanban_column=backlog).count()
+                validated_data['kanban_column'] = backlog
+                validated_data['board_position'] = last_pos
+
         instance = super().create(validated_data)
         if tag_ids:
             from apps.tags.models import Tag
@@ -200,3 +236,18 @@ class TestCaseSerializer(BaseSerializer):
             from apps.tags.models import Tag
             instance.tags.set(Tag.objects.filter(id__in=tag_ids))
         return instance
+
+
+class TestCaseMoveSerializer(serializers.Serializer):
+    """
+    Serializer para o endpoint POST /test-cases/{id}/move/.
+
+    Recebe a coluna de destino e a posição dentro dela.
+    """
+    column_id = serializers.UUIDField(
+        help_text="UUID da coluna de destino"
+    )
+    position = serializers.IntegerField(
+        min_value=0,
+        help_text="Posição dentro da coluna (0 = primeiro)"
+    )

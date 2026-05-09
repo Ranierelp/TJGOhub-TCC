@@ -1,4 +1,4 @@
-from django.db.models import Count
+from django.db.models import Count, F
 from rest_framework import status
 from rest_framework.decorators import action
 from rest_framework.parsers import MultiPartParser, FormParser
@@ -7,11 +7,13 @@ from drf_spectacular.utils import extend_schema, extend_schema_view
 
 from apps.commons.api.v1.viewsets import BaseModelApiViewSet
 from apps.cases.models import TestCase
+from apps.kanban.models import KanbanColumn
 from .serializers import (
     TestCaseSerializer,
     TestCaseListSerializer,
     TestCaseAttachmentSerializer,
     TestCaseAttachmentWriteSerializer,
+    TestCaseMoveSerializer,
 )
 from .filters import TestCaseFilter
 
@@ -194,6 +196,77 @@ class TestCaseViewSet(BaseModelApiViewSet):
         write_serializer.save()
         read_serializer = TestCaseAttachmentSerializer(attachment, context={"request": request})
         return Response(read_serializer.data)
+
+    @extend_schema(
+        summary="Move caso de teste para outra coluna do Kanban",
+        description=(
+            "Atualiza a coluna e posição do caso no board. "
+            "Recalcula automaticamente as posições dos outros casos afetados."
+        ),
+        tags=["Casos de Teste"],
+        request=TestCaseMoveSerializer,
+        responses={200: TestCaseSerializer},
+    )
+    @action(detail=True, methods=["post"], url_path="move")
+    def move(self, request, id=None):
+        """Move o caso para uma coluna e posição específica no board."""
+        test_case = self.get_object()
+
+        serializer = TestCaseMoveSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+
+        column_id = serializer.validated_data["column_id"]
+        new_position = serializer.validated_data["position"]
+
+        target_column = KanbanColumn.objects.filter(id=column_id).first()
+        if not target_column:
+            return Response(
+                {"detail": "Coluna não encontrada."},
+                status=status.HTTP_404_NOT_FOUND,
+            )
+
+        old_column = test_case.kanban_column
+        old_position = test_case.board_position
+
+        if old_column == target_column:
+            # Movendo dentro da mesma coluna
+            if old_position < new_position:
+                # Moveu para baixo: fecha o buraco acima, abre espaço abaixo
+                TestCase.objects.filter(
+                    kanban_column=target_column,
+                    board_position__gt=old_position,
+                    board_position__lte=new_position,
+                ).update(board_position=F("board_position") - 1)
+            elif old_position > new_position:
+                # Moveu para cima: empurra os outros para baixo
+                TestCase.objects.filter(
+                    kanban_column=target_column,
+                    board_position__gte=new_position,
+                    board_position__lt=old_position,
+                ).update(board_position=F("board_position") + 1)
+        else:
+            # Movendo para coluna diferente
+            # 1. Fecha o buraco na coluna de origem
+            if old_column:
+                TestCase.objects.filter(
+                    kanban_column=old_column,
+                    board_position__gt=old_position,
+                ).update(board_position=F("board_position") - 1)
+            # 2. Abre espaço na coluna de destino
+            TestCase.objects.filter(
+                kanban_column=target_column,
+                board_position__gte=new_position,
+            ).update(board_position=F("board_position") + 1)
+
+        test_case.kanban_column = target_column
+        test_case.board_position = new_position
+        test_case.updated_by = request.user
+        test_case.save(update_fields=["kanban_column", "board_position", "updated_by", "updated_at"])
+
+        return Response(
+            TestCaseSerializer(test_case, context={"request": request}).data,
+            status=status.HTTP_200_OK,
+        )
 
     @extend_schema(
         summary="Faz upload de anexo para o caso de teste",
