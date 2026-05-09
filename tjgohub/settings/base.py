@@ -30,6 +30,7 @@ LOCAL_APPS = [
     "apps.artifacts",
     "apps.cases",
     "apps.environments",
+    "apps.kanban",
     "apps.metrics",
     "apps.projects",
     "apps.results",

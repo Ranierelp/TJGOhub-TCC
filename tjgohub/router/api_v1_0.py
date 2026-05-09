@@ -9,6 +9,8 @@ from apps.tags.api.v1.router import tags_router
 from apps.cases.api.v1.router import cases_router
 from apps.runs.api.v1.router import runs_router
 from apps.results.api.v1.router import results_router
+from apps.kanban.api.v1.router import kanban_router
+from apps.kanban.api.v1.viewsets import KanbanBoardView
 from apps.runs.api.v1.report_views import UploadReportView
 
 api_v1_0_urls = [
@@ -24,4 +26,6 @@ api_v1_0_urls = [
     path("", include((cases_router.urls, "cases"), namespace="cases")),
     path("", include((runs_router.urls, "runs"), namespace="runs")),
     path("", include((results_router.urls, "results"), namespace="results")),
+    path("", include((kanban_router.urls, "kanban"), namespace="kanban")),
+    path("kanban/board/", KanbanBoardView.as_view(), name="kanban-board"),
 ] + auth_urls
