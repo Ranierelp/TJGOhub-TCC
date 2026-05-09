@@ -27,6 +27,19 @@ class TestCase(BaseModel):
         (STATUS_DEPRECATED, _('Depreciado')),
     ]
 
+    # Prioridades
+    PRIORITY_CRITICAL = 'CRITICAL'
+    PRIORITY_HIGH = 'HIGH'
+    PRIORITY_MEDIUM = 'MEDIUM'
+    PRIORITY_LOW = 'LOW'
+
+    PRIORITY_CHOICES = [
+        (PRIORITY_CRITICAL, _('Crítica')),
+        (PRIORITY_HIGH, _('Alta')),
+        (PRIORITY_MEDIUM, _('Média')),
+        (PRIORITY_LOW, _('Baixa')),
+    ]
+
     class Meta(BaseModel.Meta):
         verbose_name = _("Caso de Teste")
         verbose_name_plural = _("Casos de Teste")
@@ -52,6 +65,7 @@ class TestCase(BaseModel):
             models.Index(fields=['playwright_id']),
             models.Index(fields=['module']),
             models.Index(fields=['case_id']),
+            models.Index(fields=['kanban_column', 'board_position']),
         ]
 
     # =============================================================================
@@ -89,6 +103,24 @@ class TestCase(BaseModel):
         choices=STATUS_CHOICES,
         default=STATUS_DRAFT,
         help_text=_("Status atual do caso de teste")
+    )
+
+    priority = models.CharField(
+        _("Prioridade"),
+        max_length=20,
+        choices=PRIORITY_CHOICES,
+        default=PRIORITY_MEDIUM,
+        help_text=_("Prioridade do caso de teste")
+    )
+
+    assigned_to = models.ForeignKey(
+        'users.User',
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='assigned_cases',
+        verbose_name=_("Responsável"),
+        help_text=_("Usuário responsável por este caso de teste")
     )
 
     module = models.CharField(
@@ -166,6 +198,26 @@ class TestCase(BaseModel):
         related_name='test_cases',
         verbose_name=_("Tags"),
         help_text=_("Tags para categorização")
+    )
+
+    # =============================================================================
+    # CAMPOS - KANBAN
+    # =============================================================================
+
+    kanban_column = models.ForeignKey(
+        'kanban.KanbanColumn',
+        on_delete=models.SET_NULL,
+        related_name='test_cases',
+        verbose_name=_("Coluna Kanban"),
+        null=True,
+        blank=True,
+        help_text=_("Coluna do board onde este caso está posicionado")
+    )
+
+    board_position = models.PositiveIntegerField(
+        _("Posição no board"),
+        default=0,
+        help_text=_("Ordem dentro da coluna (0 = primeiro)")
     )
 
     # =============================================================================
