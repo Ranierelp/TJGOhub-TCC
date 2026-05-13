@@ -145,6 +145,26 @@ class ProjectViewSet(BaseModelApiViewSet):
         )
 
     @extend_schema(
+        summary="Remove permanentemente um projeto (hard delete)",
+        description="Remove o registro do banco de dados. Ação irreversível.",
+        tags=["Projetos"],
+        responses={204: None},
+    )
+    @action(detail=True, methods=["delete"], url_path="hard-delete")
+    def hard_delete(self, request, id=None):
+        """Remove o projeto permanentemente do banco de dados."""
+        project = Project.all_objects.filter(id=id).first()
+
+        if not project:
+            return Response(
+                {"detail": "Projeto não encontrado."},
+                status=status.HTTP_404_NOT_FOUND,
+            )
+
+        project.hard_delete()
+        return Response(status=status.HTTP_204_NO_CONTENT)
+
+    @extend_schema(
         summary="Reativa projeto",
         description="Reativa um projeto previamente arquivado.",
         tags=["Projetos"],
