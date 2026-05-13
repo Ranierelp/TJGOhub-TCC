@@ -69,6 +69,46 @@ class KanbanColumnViewSet(BaseModelApiViewSet):
                 created_by=user,
             )
 
+    def destroy(self, request, *args, **kwargs):
+        """
+        Remove uma coluna do Kanban.
+
+        Se a coluna tiver casos, é obrigatório informar `target_column_id`
+        (query param ou body) para onde os casos serão movidos antes da remoção.
+        Se a coluna estiver vazia, a remoção ocorre diretamente.
+        """
+        column = self.get_object()
+
+        target_id = (
+            request.query_params.get("target_column_id")
+            or request.data.get("target_column_id")
+        )
+
+        from apps.cases.models import TestCase
+        cases_count = TestCase.objects.filter(kanban_column=column).count()
+
+        if cases_count > 0 and not target_id:
+            return Response(
+                {
+                    "error": "Esta coluna possui casos. Informe 'target_column_id' para movê-los.",
+                    "cases_count": cases_count,
+                },
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        if target_id:
+            try:
+                target = KanbanColumn.objects.get(id=target_id)
+            except KanbanColumn.DoesNotExist:
+                return Response(
+                    {"error": "Coluna de destino não encontrada."},
+                    status=status.HTTP_400_BAD_REQUEST,
+                )
+            TestCase.objects.filter(kanban_column=column).update(kanban_column=target)
+
+        self.perform_destroy(column)
+        return Response(status=status.HTTP_204_NO_CONTENT)
+
     @extend_schema(
         summary="Reordena colunas em lote",
         tags=["Kanban"],
