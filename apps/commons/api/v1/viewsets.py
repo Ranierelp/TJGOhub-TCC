@@ -36,10 +36,12 @@ class LoggingMethodMixin:
     def log(self, operation, instance):
         if operation == ADDITION:
             action_message = _('Created')
-        if operation == CHANGE:
+        elif operation == CHANGE:
             action_message = _('Updated')
-        if operation == DELETION:
+        elif operation == DELETION:
             action_message = _('Deleted')
+        else:
+            action_message = _('Unknown')
         LogEntry.objects.log_action(
             user_id=self.request.user.pkid,
             content_type_id=ContentType.objects.get_for_model(instance).pk,
@@ -128,49 +130,6 @@ class BaseListApiViewSet(mixins.ListModelMixin, GenericViewSet):
         if getattr(self, "swagger_fake_view", False):
             return queryset.none()
 
-        if self.request:
-
-            if "page" not in self.request.query_params:
-                self.pagination_class = None
-
-            """
-            To get filters and searches
-            """
-            filters = {}
-
-            for param, value in self.request.GET.items():
-                if param != "page":
-                    field_name = param.split("__")[0]
-                    try:
-                        # Tenta obter o campo correspondente ao parâmetro da consulta
-                        field = queryset.model._meta.get_field(field_name)
-                    except FieldDoesNotExist:
-                        # Descomentar a linha abaixo somente haja a necessidade de log dos parâmetros não aceitos
-                        # print(f"[BaseListApiViewSet] Campo inválido para lookups: {field_name}")
-                        continue
-
-                    if value in ["bool(true)", "true", "True", "TRUE", True]:
-                        filters[param] = True
-                    elif value in ["bool(false)", "false", "False", "FALSE", False]:
-                        filters[param] = False
-                    elif field.get_internal_type() in ["BooleanField"]:
-                        filters[field_name] = True if value.lower() == "true" else False
-                    elif field.get_internal_type() in ["DateField"]:
-                        filters[param] = get_mytimezone_date(value)
-                    elif field.get_internal_type() in ["ForeignKey"]:
-                        try:
-                            value = uuid.UUID(value)
-                            fk_param = str(param).split("__")
-                            param = param if fk_param[-1] == "id" else f"{fk_param[0]}__id"
-                            filters[param] = value
-                        except ValueError:
-                            filters[param] = value
-                    else:
-                        filters[param] = value
-
-            if filters:
-                queryset = queryset.filter(Q(**filters))
-
         if all(hasattr(queryset.model, attr) for attr in ["updated_by", "created_by", "is_active"]):
             return queryset.filter(is_active=True).order_by('-created_at', '-updated_at')
 
@@ -248,7 +207,6 @@ class BaseDestroyApiViewSet(mixins.DestroyModelMixin, GenericViewSet, LoggingMet
     def perform_destroy(self, instance):
         instance.deleted_by = self.request.user
         instance.deleted_at = timezone.now()
-        instance.save()
         instance.delete()
         self._log_on_destroy(instance)
 

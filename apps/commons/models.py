@@ -26,14 +26,7 @@ class BaseModelQuerySet(QuerySet):
     """
 
     def delete(self):
-        """Soft delete em todos os objetos do queryset.
-
-        Atenção: carrega todos os objetos na memória individualmente.
-        Para volumes grandes (> alguns milhares), prefira uma atualização
-        direta via queryset.update(is_active=False).
-        """
-        for x in self:
-            x.delete()
+        self.update(is_active=False, deleted_at=timezone.now())
 
     def hard_delete(self):
         """Delete permanente em todos os objetos do queryset.
