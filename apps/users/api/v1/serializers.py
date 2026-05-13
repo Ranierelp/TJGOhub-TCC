@@ -15,8 +15,6 @@ from rest_framework_simplejwt.serializers import (
     TokenObtainPairSerializer as JwtTokenObtainPairSerializer,
 )
 from rest_framework_simplejwt.tokens import RefreshToken
-from tools.utils import validate_cellphone
-
 from apps.users import models
 
 """
@@ -76,60 +74,22 @@ class UserUpdateSerializer(serializers.ModelSerializer):
         }
 
     def validate(self, attrs):
-        try:
-            if "new_password" in attrs and "confirm_password" in attrs:
-                if attrs.get("new_password") != attrs.get("confirm_password"):
+        new_password = attrs.get("new_password")
+        confirm_password = attrs.get("confirm_password")
+
+        if new_password or confirm_password:
+            try:
+                if new_password != confirm_password:
                     raise serializers.ValidationError(_(u"As duas senhas devem ser idênticas."))
-            validate_password(attrs.get("new_password"))
-            items = list(attrs.items())
-            items.append(("password", make_password(attrs.get("new_password"))))
-            items.sort()
-            attrs = collections.OrderedDict(items)
-            del attrs["new_password"]
-            del attrs["confirm_password"]
-        except ValidationError as e:
-            raise serializers.ValidationError(e.messages)
+                validate_password(new_password)
+                attrs["password"] = make_password(new_password)
+                attrs.pop("new_password", None)
+                attrs.pop("confirm_password", None)
+            except ValidationError as e:
+                raise serializers.ValidationError(e.messages)
 
         return attrs
 
-
-class UserOnboardingSerializer(serializers.ModelSerializer):
-    def validate(self, attrs):
-        try:
-            if "cellphone" in attrs:
-                validate_cellphone(attrs.get("cellphone"))
-        except ValidationError as e:
-            raise serializers.ValidationError(e.messages)
-
-        return attrs
-
-    name = serializers.CharField(required=True)
-    cellphone = serializers.CharField(required=True)
-    cep = serializers.CharField(required=True)
-    state = serializers.CharField(required=False)
-    city = serializers.CharField(required=True)
-    district = serializers.CharField(required=True)
-    street = serializers.CharField(required=True)
-    number = serializers.CharField(required=True)
-    complement = serializers.CharField(required=False, allow_blank=True)
-    avatar = serializers.CharField(required=False, allow_blank=True)
-
-    class Meta:
-        model = models.User
-        fields = (
-            "name",
-            "is_active",
-            "groups",
-            "cellphone",
-            "cep",
-            "state",
-            "city",
-            "district",
-            "street",
-            "number",
-            "complement",
-            "avatar",
-        )
 
 
 class UserRegisterSerializer(serializers.ModelSerializer):
@@ -175,11 +135,6 @@ class UserRegisterSerializer(serializers.ModelSerializer):
             "first_name", "last_name", "email", "password1", "password2", "terms", "receive_emails"
         )
 
-    def save(self, **kwargs):
-        instance = super().save(**kwargs)
-        if self.validated_data.get("password1"):
-            instance.set_password(self.validated_data.get("password1"))
-        return instance
 
 
 """
@@ -206,7 +161,7 @@ class PasswordResetKeyWebTokenSerializer(serializers.Serializer):
         try:
             user = models.User.objects.get(email=email)
         except models.User.DoesNotExist:
-            raise serializers.ValidationError(code=404, detail=_(u"O usuário não existe."))
+            return {"user": None, "email": email, "token": None}
 
         user.code_date = timezone.now()
         user.save()

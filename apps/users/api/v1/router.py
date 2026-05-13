@@ -9,7 +9,6 @@ user_router = DefaultRouter()
 
 # User actions
 user_router.register(r"user", UserViewSet, "user")
-user_router.register(r"", UserOnboardingViewSet, "user-onboarding")
 
 auth_urls = [
     path("user/token/", EmailTokenObtainPairView.as_view(), name="token_obtain_pair"),

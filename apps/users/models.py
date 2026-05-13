@@ -73,6 +73,8 @@ class User(AbstractBaseUser, BaseModel, PermissionsMixin):
             models.Index(fields=["email"]),
         ]
 
+    is_active = models.BooleanField(_("Ativo"), default=True)
+
     # Credentials
     email = models.EmailField(_("Email"), max_length=255, unique=True)
     first_name = models.CharField(_("Nome"), max_length=30, null=True, blank=True, help_text=_("Nome do usuário"))
