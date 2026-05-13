@@ -19,7 +19,7 @@ SECRET_KEY = env("DJANGO_SECRET_KEY")
 
 DEBUG = env.bool("DJANGO_DEBUG", False)
 
-ALLOWED_HOSTS = ["*"]
+ALLOWED_HOSTS = env.list("ALLOWED_HOSTS", default=[])
 
 BASE_URL = env("BASE_URL")
 
@@ -56,6 +56,7 @@ THIRD_PARTY_APPS = [
     "import_export",
     # Authentication
     "rest_framework_simplejwt",
+    "rest_framework_simplejwt.token_blacklist",
     # Others
     "django_extensions",
     "django_crontab",
@@ -130,6 +131,13 @@ REST_FRAMEWORK = {
     "PAGE_SIZE": 10,
     "DATE_INPUT_FORMATS": ("%d/%m/%Y",),
     "COERCE_DECIMAL_TO_STRING": False,
+    "DEFAULT_THROTTLE_CLASSES": [
+        "rest_framework.throttling.AnonRateThrottle",
+    ],
+    "DEFAULT_THROTTLE_RATES": {
+        "anon": "5/hour",
+        "user": "100/hour",
+    },
 }
 
 VERSION_FILE = ROOT_DIR / "VERSION"
