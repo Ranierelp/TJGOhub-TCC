@@ -8,11 +8,11 @@ class MineOrReadOnly(permissions.BasePermission):
 
         if request.method in ["POST", "PATCH"]:
             if any(key in request.data and request.data[key] == str(request.user.id) for key in
-                   ["user", "broker", "agent"]):
+                   ["created_by"]):
                 return True
             try:
                 instance = view.get_object()
-                attributes = ["user", "broker", "agent"]
+                attributes = ["created_by"]
                 if any(hasattr(instance, attr) and getattr(instance, attr) == request.user for attr in attributes):
                     return True
             except Exception:
@@ -33,7 +33,7 @@ class MineOrReadOnly(permissions.BasePermission):
         if not request.user:
             return False
 
-        attributes = ["user", "broker", "agent"]
+        attributes = ["created_by"]
         if any(hasattr(obj, attr) and getattr(obj, attr) == request.user for attr in attributes):
             return True
 
