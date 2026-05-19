@@ -37,9 +37,11 @@ class TestCaseAttachmentWriteSerializer(serializers.ModelSerializer):
         model = TestCaseAttachment
         fields = ["file", "title", "description", "attachment_type", "order"]
         extra_kwargs = {
-            "description": {"required": False, "default": ""},
+            "file":              {"required": False, "allow_null": True},
+            "title":             {"required": False, "default": ""},
+            "description":       {"required": False, "default": ""},
             "attachment_type":   {"required": False, "default": TestCaseAttachment.TYPE_IMAGE},
-            "order": {"required": False, "default": 0},
+            "order":             {"required": False, "default": 0},
         }
 
 

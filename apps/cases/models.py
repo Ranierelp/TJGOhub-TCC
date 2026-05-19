@@ -444,12 +444,16 @@ class TestCaseAttachment(BaseModel):
 
     file = models.FileField(
         _("Arquivo"),
-        upload_to=test_case_attachment_path
+        upload_to=test_case_attachment_path,
+        blank=True,
+        null=True,
     )
 
     title = models.CharField(
         _("Título"),
-        max_length=255
+        max_length=255,
+        blank=True,
+        default="",
     )
 
     description = models.TextField(
