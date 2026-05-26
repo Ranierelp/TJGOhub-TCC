@@ -182,7 +182,16 @@ class KanbanBoardView(APIView):
             TestCase.objects.filter(kanban_column__isnull=True).update(kanban_column=backlog)
 
         project_id = request.query_params.get("project")
-        columns = KanbanColumn.objects.all().select_related("project").order_by("order")
+
+        # Quando um projeto está selecionado, mostra globais + específicas dele.
+        # Quando "Todos" (sem project_id), mostra absolutamente todas.
+        columns_qs = KanbanColumn.objects.all().select_related("project")
+        if project_id:
+            from django.db.models import Q
+            # Usar project__id (UUID) — project_id no FK aponta pro pkid (int)
+            columns_qs = columns_qs.filter(Q(project__isnull=True) | Q(project__id=project_id))
+
+        columns = columns_qs.order_by("order")
         serializer = KanbanBoardColumnSerializer(
             columns,
             many=True,
