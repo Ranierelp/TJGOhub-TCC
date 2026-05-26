@@ -37,11 +37,20 @@ class TestResultFilter(django_filters.FilterSet):
         label="Status (múltiplos)",
     )
 
+    # FKs precisam apontar pra __id (UUID). Sem isso, o ModelChoiceFilter
+    # auto-gerado tentaria casar pelo pkid (int) e o front receberia 400.
+    test_run = django_filters.UUIDFilter(
+        field_name="test_run__id",
+        label="Execução (UUID)",
+    )
+    test_case = django_filters.UUIDFilter(
+        field_name="test_case__id",
+        label="Caso de Teste (UUID)",
+    )
+
     class Meta:
         model = TestResult
         fields = {
-            "test_run":  ["exact"],
-            "test_case": ["exact"],
             "status":    ["exact"],
             "retry_number": ["exact", "gte"],
         }

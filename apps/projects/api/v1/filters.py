@@ -31,10 +31,16 @@ class ProjectFilter(django_filters.FilterSet):
         label="Criado antes de",
     )
 
+    # FK precisa apontar pra __id (UUID). Sem isso, o ModelChoiceFilter
+    # auto-gerado tentaria casar pelo pkid (int) e o front receberia 400.
+    created_by = django_filters.UUIDFilter(
+        field_name="created_by__id",
+        label="Criado por (UUID)",
+    )
+
     class Meta:
         model = Project
         fields = {
             "is_active": ["exact"],
             "slug": ["exact"],
-            "created_by": ["exact"],
         }
