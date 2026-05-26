@@ -1,6 +1,7 @@
 # apps/projects/api/v1/viewsets.py
 
 from django.db.models import Count, Q
+from django.db.models.deletion import ProtectedError
 from django.utils import timezone
 from rest_framework import status
 from rest_framework.decorators import action
@@ -161,7 +162,42 @@ class ProjectViewSet(BaseModelApiViewSet):
                 status=status.HTTP_404_NOT_FOUND,
             )
 
-        project.hard_delete()
+        from collections import Counter
+
+        try:
+            project.hard_delete()
+        except ProtectedError as exc:
+            # PROTECT enxerga TODOS os filhos do banco — incluindo os soft-deleted
+            # (is_active=False). Como o usuário já "removeu" esses ao arquivar, são
+            # lixo invisível: apagamos de vez. Depois tentamos de novo.
+            arquivados = [o for o in exc.protected_objects if not o.is_active]
+            ativos     = [o for o in exc.protected_objects if o.is_active]
+
+            for obj in arquivados:
+                # IMPORTANTE: usar hard_delete() — o .delete() do BaseModelQuerySet
+                # foi sobrescrito para fazer soft delete (UPDATE is_active=False),
+                # então não removeria do banco.
+                type(obj).all_objects.filter(pk=obj.pk).hard_delete()
+
+            # Se sobraram filhos ATIVOS, é decisão do usuário: ele precisa
+            # excluí-los pelo UI antes. Devolve 409 com o que ainda bloqueia.
+            if ativos:
+                counts = Counter(o._meta.verbose_name_plural for o in ativos)
+                partes = [f"{qtd} {nome}" for nome, qtd in counts.items()]
+                return Response(
+                    {
+                        "detail": (
+                            "Não é possível excluir este projeto. Ele ainda possui: "
+                            + ", ".join(partes)
+                            + ". Remova esses itens antes."
+                        )
+                    },
+                    status=status.HTTP_409_CONFLICT,
+                )
+
+            # Só tinha lixo arquivado — agora dá pra apagar o projeto.
+            project.hard_delete()
+
         return Response(status=status.HTTP_204_NO_CONTENT)
 
     @extend_schema(
