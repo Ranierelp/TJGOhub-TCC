@@ -2,19 +2,21 @@ import re
 
 from rest_framework import serializers
 
+from apps.commons.api.v1.serializers import BaseSerializer, PkToIdMixin
 from apps.kanban.models import KanbanColumn
 from apps.tags.api.v1.serializers import TagSerializer
 
 
-class KanbanColumnSerializer(serializers.ModelSerializer):
+class KanbanColumnSerializer(BaseSerializer):
     """
     Serializer para KanbanColumn.
 
-    Usado tanto em lista quanto em detalhe.
-    project_id aceita o UUID do projeto (ou null para coluna global).
+    Herda de BaseSerializer pra converter automaticamente o FK `project`:
+    aceita UUID na entrada e devolve UUID na saída (compatível com o que
+    o frontend envia/espera). Sem isso, o campo usaria o pkid (int interno).
     """
 
-    class Meta:
+    class Meta(BaseSerializer.Meta):
         model = KanbanColumn
         fields = [
             'id',
@@ -26,7 +28,6 @@ class KanbanColumnSerializer(serializers.ModelSerializer):
             'created_at',
             'updated_at',
         ]
-        read_only_fields = ['id', 'is_active', 'created_at', 'updated_at']
 
     def validate_color(self, value):
         """Garante que a cor está no formato #RRGGBB."""
@@ -41,10 +42,13 @@ class KanbanColumnSerializer(serializers.ModelSerializer):
         return value.strip()
 
 
-class KanbanBoardCaseSerializer(serializers.ModelSerializer):
+class KanbanBoardCaseSerializer(PkToIdMixin, serializers.ModelSerializer):
     """
     Representação compacta de um TestCase dentro do board.
     Inclui apenas o necessário para renderizar o card no frontend.
+
+    PkToIdMixin converte o FK `project` de pkid (int) para id (UUID) na saída,
+    pra bater com o que o front espera (consistente com KanbanBoardColumnSerializer).
     """
     tags = TagSerializer(many=True, read_only=True)
     status_display = serializers.CharField(source="get_status_display", read_only=True)
@@ -91,10 +95,13 @@ class KanbanBoardCaseSerializer(serializers.ModelSerializer):
         return (first + last) or u.email[:2].upper()
 
 
-class KanbanBoardColumnSerializer(serializers.ModelSerializer):
+class KanbanBoardColumnSerializer(PkToIdMixin, serializers.ModelSerializer):
     """
     Coluna do board com seus casos aninhados, já ordenados por board_position.
     Usado exclusivamente no endpoint GET /kanban/board/.
+
+    PkToIdMixin converte o output do FK `project` de pkid (int) para id (UUID),
+    pra bater com o que o frontend espera (string | null).
     """
     cases = serializers.SerializerMethodField()
     cases_count = serializers.SerializerMethodField()
