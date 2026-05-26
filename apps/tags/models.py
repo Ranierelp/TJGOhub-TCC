@@ -15,6 +15,22 @@ class Tag(models.Model):
 
     Exemplos:
     - "Login", "Crítico", "Smoke Test", "Módulo Processos"
+
+    ─────────────────────────────────────────────────────────────────────────
+    EXCEÇÃO ARQUITETURAL — não herda de BaseModel de propósito.
+
+    O resto do projeto usa o padrão `pkid` (BigAutoField PK) + `id` (UUID
+    externo) com soft delete e rastreabilidade. Tag é a única exceção:
+
+    - UUID como PK direto, sem pkid: lista curta de labels, ganho de JOIN
+      do BigAuto é irrelevante.
+    - Hard delete (TagViewSet.destroy faz remoção física, com proteção se
+      em uso): label deletada não deve acumular como lixo no banco.
+    - Sem created_by/updated_by: categoria global, autoria não importa.
+
+    Se um dia precisar de soft delete ou rastreabilidade, migrar pra BaseModel
+    é uma operação custosa (reescreve as M2M cases_tags e runs_tags).
+    ─────────────────────────────────────────────────────────────────────────
     """
 
     # Validador para cor hexadecimal
