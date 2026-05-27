@@ -50,3 +50,6 @@ urllib3<2.0
 
 # Processamento assíncrono de tasks em background
 celery[redis]>=5.3.0
+
+# Histórico/auditoria de edições por modelo (cria shadow table com snapshots)
+django-simple-history==3.11.0

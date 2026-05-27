@@ -2,6 +2,7 @@ from django.db import models
 from django.core.exceptions import ValidationError
 from django.utils.text import slugify
 from django.utils.translation import gettext_lazy as _
+from simple_history.models import HistoricalRecords
 
 from apps.commons.models import BaseModel
 
@@ -218,6 +219,31 @@ class TestCase(BaseModel):
         _("Posição no board"),
         default=0,
         help_text=_("Ordem dentro da coluna (0 = primeiro)")
+    )
+
+    # =============================================================================
+    # AUDITORIA — django-simple-history
+    # =============================================================================
+    #
+    # Cria a shadow table `HistoricalTestCase` que armazena 1 snapshot por save.
+    # O middleware HistoryRequestMiddleware preenche `history_user` com
+    # request.user automaticamente.
+    #
+    # excluded_fields: campos auto/sistema que não interessam na timeline.
+    # m2m_fields: precisa listar M2M explicitamente — sem isso adições/remoções
+    # de tag não são capturadas.
+    history = HistoricalRecords(
+        excluded_fields=[
+            "updated_at",
+            "is_active",
+            "deleted_at",
+            "deleted_by",
+            "kanban_column",
+            "board_position",
+            "slug",
+            "last_modified_by",
+        ],
+        m2m_fields=["tags"],
     )
 
     # =============================================================================
@@ -478,6 +504,12 @@ class TestCaseAttachment(BaseModel):
         on_delete=models.SET_NULL,
         null=True,
         verbose_name=_("Enviado por")
+    )
+
+    # Auditoria — shadow table HistoricalTestCaseAttachment. A timeline do caso
+    # une os snapshots dos dois modelos pra mostrar "adicionou/removeu passo".
+    history = HistoricalRecords(
+        excluded_fields=["updated_at", "is_active", "deleted_at", "deleted_by"],
     )
 
     def __str__(self):

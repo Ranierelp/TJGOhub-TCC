@@ -60,6 +60,8 @@ THIRD_PARTY_APPS = [
     # Others
     "django_extensions",
     "django_crontab",
+    # Auditoria: shadow tables com snapshots de cada save
+    "simple_history",
 ]
 
 HEALTH_CHECK_APPS = [
@@ -93,6 +95,9 @@ MIDDLEWARE = [
     "django.contrib.messages.middleware.MessageMiddleware",
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
     "django.middleware.locale.LocaleMiddleware",
+    # Injeta request.user em cada snapshot do simple-history (sem isso
+    # os snapshots ficariam sem autor quando salvos fora do shell).
+    "simple_history.middleware.HistoryRequestMiddleware",
 ]
 
 ROOT_URLCONF = "tjgohub.urls"

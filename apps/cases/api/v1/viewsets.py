@@ -7,6 +7,7 @@ from drf_spectacular.utils import extend_schema, extend_schema_view
 
 from apps.commons.api.v1.viewsets import BaseModelApiViewSet
 from apps.cases.models import TestCase
+from apps.cases.services.history import build_history_timeline
 from apps.kanban.models import KanbanColumn
 from .serializers import (
     TestCaseSerializer,
@@ -293,3 +294,19 @@ class TestCaseViewSet(BaseModelApiViewSet):
 
         read_serializer = TestCaseAttachmentSerializer(attachment, context={"request": request})
         return Response(read_serializer.data, status=status.HTTP_201_CREATED)
+
+    @extend_schema(
+        summary="Histórico de edições do caso de teste",
+        description=(
+            "Retorna a timeline de todas as edições do caso, em ordem cronológica "
+            "reversa (mais recente primeiro). Inclui edições do próprio caso e de "
+            "seus anexos (passos)."
+        ),
+        tags=["Casos de Teste"],
+    )
+    @action(detail=True, methods=["get"], url_path="history")
+    def history(self, request, id=None):
+        """Retorna a timeline de edições do caso (lê as shadow tables do simple-history)."""
+        case = self.get_object()
+        entries = build_history_timeline(case)
+        return Response(entries, status=status.HTTP_200_OK)
