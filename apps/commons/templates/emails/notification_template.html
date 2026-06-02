@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <meta http-equiv="X-UA-Compatible" content="ie=edge">
+        <link href="https://fonts.googleapis.com/css?family=Ubuntu:300,400,700" rel="stylesheet">
+    </head>
+
+    <body>
+        <div style="background:#fff; font-family:Ubuntu,Helvetica,Arial,sans-serif; padding:0px 10px;">
+            <table style="border:0px; margin:0 auto; max-width:600px; width:100%;">
+                <tbody>
+                    <tr>
+                        <td style="background-color:#fff; text-align:center; padding:10px 5px;">
+                            <img style="width: 500px" src="/logo.png"/>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td>
+                            <table style="border:0px; background:#fff; width:100%; max-width:600px; margin:0 auto; padding:20px 0px;">
+                                <tbody>
+                                    <tr>
+                                        <td style="background:#004267; color:#fff; padding:0px 30px; border-radius:6px 6px 0px 0px; font-size:18px;">
+                                            <h3>{{ assunto }}</h3>
+                                        </td>
+                                    </tr>
+                                    <tr style="color:#4a4a4a;">
+                                        <td style="background:#fff; padding:20px; font-size:14px; font-weight:300; line-height:22px;">
+                                            <p style="text-align:justify-all; color:#1B1C1B; font-weight: bold;">Olá, {{ nome }}.</p>
+                                            <p style="text-align: justify; text-align-last: center;">
+                                                {{ mensagem }}
+                                            </p>
+                                            {% if informacoes_adicionais %}
+                                            <p style="text-align: justify; text-align-last: center; color:#555;">
+                                                {{ informacoes_adicionais }}
+                                            </p>
+                                            {% endif %}
+                                            {% if link %}
+                                            <br>
+                                            <p style="text-align: center;">
+                                                <a href="{{ link }}" style="background:#004267; color:#fff; border-radius:6px; font-size:14px; font-weight: bold; text-decoration: none; margin: auto; padding: 15px;">
+                                                    {{ texto_botao }}
+                                                </a>
+                                            </p>
+                                            {% endif %}
+                                            <br>
+                                            <p style="text-align: justify; text-align-last: center; font-size:12px; color:#888;">
+                                                Caso tenha qualquer dúvida ou preocupação, não hesite em entrar em
+                                                contato com nossa equipe de suporte.
+                                                <br><br>
+                                            </p>
+                                        </td>
+                                    </tr>
+                                    <tr style="color: #898989;font-size: 12px;text-align: center;">
+                                        <td style="padding: 0px; margin: 0px;">
+                                            <p>TJGOhub &copy;</p>
+                                        </td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </body>
+</html>
