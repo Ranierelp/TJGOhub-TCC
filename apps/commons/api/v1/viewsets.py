@@ -1,21 +1,25 @@
 import uuid
 
 from django.apps import apps
+from django.conf import settings
 from django.contrib.admin.models import LogEntry, ADDITION, CHANGE, ContentType, DELETION
 from django.core.exceptions import FieldDoesNotExist
 from django.db.models import FileField, Q
+from django.template.loader import render_to_string
 from django.utils import timezone
 from django.utils.datastructures import MultiValueDictKeyError
 from django.utils.module_loading import import_string
 from django.utils.translation import gettext as _
 from rest_framework import mixins, status
 from rest_framework.decorators import action
-from rest_framework.permissions import DjangoModelPermissions, IsAuthenticated
+from rest_framework.permissions import IsAuthenticated
+
+from apps.commons.api.v1.permissions import ActionPermissions
 from rest_framework.response import Response
 from rest_framework.viewsets import GenericViewSet
 
 from apps.commons.api.v1 import serializers
-from tools.utils import retrieve_file_from_bytes, get_mytimezone_date
+from tools.utils import retrieve_file_from_bytes, get_mytimezone_date, send_email
 
 
 class LoggingMethodMixin:
@@ -64,7 +68,7 @@ class LoggingMethodMixin:
 
 
 class BaseCreateApiViewSet(mixins.CreateModelMixin, GenericViewSet, LoggingMethodMixin):
-    permission_classes = [IsAuthenticated, DjangoModelPermissions]
+    permission_classes = [IsAuthenticated, ActionPermissions]
 
     def perform_create(self, serializer):
         if self.request.user.is_authenticated:
@@ -118,7 +122,7 @@ class BaseCreateApiViewSet(mixins.CreateModelMixin, GenericViewSet, LoggingMetho
 
 
 class BaseListApiViewSet(mixins.ListModelMixin, GenericViewSet):
-    permission_classes = [IsAuthenticated, DjangoModelPermissions]
+    permission_classes = [IsAuthenticated, ActionPermissions]
     model = None
 
     def get_queryset(self):
@@ -137,7 +141,7 @@ class BaseListApiViewSet(mixins.ListModelMixin, GenericViewSet):
 
 
 class BaseRetrieveApiViewSet(mixins.RetrieveModelMixin, GenericViewSet):
-    permission_classes = [IsAuthenticated, DjangoModelPermissions]
+    permission_classes = [IsAuthenticated, ActionPermissions]
     lookup_field = "id"
 
     def retrieve(self, request, *args, **kwargs):
@@ -150,7 +154,7 @@ class BaseRetrieveApiViewSet(mixins.RetrieveModelMixin, GenericViewSet):
 
 
 class BaseUpdateApiViewSet(mixins.UpdateModelMixin, GenericViewSet, LoggingMethodMixin):
-    permission_classes = [IsAuthenticated, DjangoModelPermissions]
+    permission_classes = [IsAuthenticated, ActionPermissions]
     lookup_field = "id"
 
     def perform_update(self, serializer):
@@ -201,7 +205,7 @@ class BaseUpdateApiViewSet(mixins.UpdateModelMixin, GenericViewSet, LoggingMetho
 
 
 class BaseDestroyApiViewSet(mixins.DestroyModelMixin, GenericViewSet, LoggingMethodMixin):
-    permission_classes = [IsAuthenticated, DjangoModelPermissions]
+    permission_classes = [IsAuthenticated, ActionPermissions]
     lookup_field = "id"
 
     def perform_destroy(self, instance):
@@ -270,3 +274,122 @@ class AddressViewSet(BaseModelApiViewSet):
     def get_mine(self, request, *args, **kwargs):
         instance = self.model.objects.filter(user=self.request.user).first()
         return Response(self.get_serializer(instance, many=False).data, status=status.HTTP_200_OK)
+
+
+class EmailNotificationViewSet(GenericViewSet):
+    """ViewSet para disparo de notificações por email."""
+
+    permission_classes = [IsAuthenticated]
+
+    @action(
+        methods=["post"],
+        detail=False,
+        url_path="send-notification",
+        permission_classes=[IsAuthenticated],
+    )
+    def send_notification(self, request, *args, **kwargs):
+        """
+        Endpoint para envio de notificação por email usando template.
+
+        Payload esperado:
+        {
+            "to_email": "usuario@example.com" ou "email1@example.com,email2@example.com",
+            "assunto": "Assunto do email (opcional)",
+            "nome": "Nome do destinatário (opcional)",
+            "mensagem": "Mensagem personalizada",
+            "informacoes_adicionais": "Informações extras (opcional)",
+            "link": "https://link-acao.com (opcional)",
+            "texto_botao": "Texto do botão (opcional)"
+        }
+        """
+        serializer = serializers.EmailNotificationSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+
+        data = serializer.validated_data
+        context = {
+            "nome": data.get("nome", "Usuário"),
+            "assunto": data.get("assunto", "Nova Notificação - TJGOhub"),
+            "mensagem": data["mensagem"],
+            "informacoes_adicionais": data.get("informacoes_adicionais"),
+            "link": data.get("link"),
+            "texto_botao": data.get("texto_botao", "Acessar Sistema"),
+        }
+
+        try:
+            html_content = render_to_string("emails/notification_template.html", context)
+            success = send_email(
+                subject=context["assunto"],
+                from_email=settings.DEFAULT_FROM_EMAIL,
+                to_email=data["to_email"],
+                data=context,
+                template=html_content,
+            )
+
+            if success:
+                recipients = data["to_email"] if isinstance(data["to_email"], list) else [data["to_email"]]
+                return Response(
+                    {"message": "Email enviado com sucesso!", "recipients": recipients, "subject": context["assunto"]},
+                    status=status.HTTP_200_OK,
+                )
+            return Response(
+                {"error": "Falha ao enviar email. Verifique os logs do servidor."},
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            )
+
+        except Exception as e:
+            return Response(
+                {"error": f"Erro ao processar template ou enviar email: {str(e)}"},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+    @action(
+        methods=["post"],
+        detail=False,
+        url_path="send-welcome",
+        permission_classes=[IsAuthenticated],
+    )
+    def send_welcome_email(self, request, *args, **kwargs):
+        """
+        Endpoint para envio de email de boas-vindas.
+
+        Payload esperado:
+        {
+            "to_email": "usuario@example.com",
+            "nome": "Nome do usuário"
+        }
+        """
+        serializer = serializers.WelcomeEmailSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+
+        data = serializer.validated_data
+        context = {
+            "nome": data["nome"],
+            "assunto": "Bem-vindo(a) ao TJGOhub",
+            "mensagem": f'Seja bem-vindo(a) {data["nome"]}! Sua conta foi criada com sucesso.',
+            "informacoes_adicionais": "Explore todas as funcionalidades disponíveis.",
+            "link": f"{settings.SITE_URL}/dashboard",
+            "texto_botao": "Acessar Plataforma",
+        }
+
+        try:
+            html_content = render_to_string("emails/notification_template.html", context)
+            success = send_email(
+                subject=context["assunto"],
+                from_email=settings.DEFAULT_FROM_EMAIL,
+                to_email=data["to_email"],
+                data=context,
+                template=html_content,
+            )
+
+            if success:
+                return Response(
+                    {"message": "Email de boas-vindas enviado com sucesso!", "recipient": data["to_email"], "name": data["nome"]},
+                    status=status.HTTP_200_OK,
+                )
+            return Response({"error": "Falha ao enviar email de boas-vindas."}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+        except Exception as e:
+            return Response(
+                {"error": f"Erro ao enviar email de boas-vindas: {str(e)}"},
+                status=status.HTTP_400_BAD_REQUEST,
+            )

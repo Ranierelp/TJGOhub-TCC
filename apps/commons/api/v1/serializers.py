@@ -82,3 +82,24 @@ class BaseSerializer(PkToIdMixin, serializers.ModelSerializer):
         if self.partial and self.instance and hasattr(self.instance, "is_active"):
             value.setdefault("is_active", self.instance.is_active)
         super().run_validators(value)
+
+
+class EmailNotificationSerializer(serializers.Serializer):
+    to_email = serializers.CharField()
+    assunto = serializers.CharField(required=False, default="Nova Notificação - TJGOhub")
+    nome = serializers.CharField(required=False, default="Usuário")
+    mensagem = serializers.CharField()
+    informacoes_adicionais = serializers.CharField(required=False, allow_blank=True, default="")
+    link = serializers.URLField(required=False, allow_blank=True, default="")
+    texto_botao = serializers.CharField(required=False, default="Acessar Sistema")
+
+    def validate_to_email(self, value):
+        # Aceita string simples ou lista separada por vírgula
+        if "," in value:
+            return [e.strip() for e in value.split(",") if e.strip()]
+        return value
+
+
+class WelcomeEmailSerializer(serializers.Serializer):
+    to_email = serializers.EmailField()
+    nome = serializers.CharField()
