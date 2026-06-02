@@ -5,6 +5,10 @@ DEBUG = True
 
 ALLOWED_HOSTS = ["*"]
 
+# Sem throttling em desenvolvimento local
+REST_FRAMEWORK["DEFAULT_THROTTLE_CLASSES"] = []
+REST_FRAMEWORK["DEFAULT_THROTTLE_RATES"] = {}
+
 INSTALLED_APPS += ["debug_toolbar"]
 
 MIDDLEWARE = ["debug_toolbar.middleware.DebugToolbarMiddleware"] + MIDDLEWARE
@@ -99,4 +103,3 @@ LOGGING = {
 }
 
 DEFAULT_EXCEPTION_REPORTER_FILTER = "tools.helpers.CustomExceptionFilter"
-

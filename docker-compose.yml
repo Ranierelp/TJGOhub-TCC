@@ -108,6 +108,14 @@ services:
     networks:
       - tjgohub
 
+  mailhog:
+    image: mailhog/mailhog:latest
+    container_name: mailhog
+    ports:
+      - "8025:8025"
+    networks:
+      - tjgohub
+
 networks:
   tjgohub:
     driver: bridge

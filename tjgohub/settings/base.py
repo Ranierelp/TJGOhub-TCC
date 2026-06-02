@@ -314,7 +314,7 @@ if DEBUG:
     EMAIL_BACKEND = "django.core.mail.backends.smtp.EmailBackend"
     EMAIL_HOST = env("EMAIL_HOST")
     EMAIL_PORT = env("EMAIL_PORT")
-    EMAIL_USE_SSL = True
+    EMAIL_USE_SSL = False  # Mailhog/MailPit não usa SSL na porta 1025
     EMAIL_USE_TLS = False
     EMAIL_HOST_PASSWORD = env("EMAIL_HOST_PASSWORD", cast=str)
 else:
