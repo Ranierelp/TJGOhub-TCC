@@ -91,6 +91,22 @@ class UserViewSet(BaseModelApiViewSet):
         except Exception:
             pass
 
+    # ── Lista leve de usuários atribuíveis ────────────────────────────────
+    @action(
+        detail=False,
+        methods=["get"],
+        url_path="assignable",
+        permission_classes=[IsAuthenticated],
+    )
+    def assignable(self, request):
+        """Retorna apenas id + nome dos usuários ativos. Acessível a qualquer autenticado."""
+        qs = self.model.objects.filter(is_active=True).only("id", "first_name", "last_name")
+        data = [
+            {"id": str(u.id), "first_name": u.first_name, "last_name": u.last_name}
+            for u in qs
+        ]
+        return Response(data)
+
     # ── Trocar grupo do usuário ────────────────────────────────────────────
     @extend_schema(
         summary="Atribui um grupo (perfil) a um usuário",
